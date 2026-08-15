@@ -1,0 +1,6 @@
+{
+  "name": "DialerID",
+  "description": "Encrypted VoIP softphone dialer with customizable Outbound Caller ID, HD audio, and real-time balance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
