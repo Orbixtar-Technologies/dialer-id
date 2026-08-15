@@ -426,14 +426,13 @@ class DialerRepository(
             parsedProfile.totalMinutes
         }
 
-        val localPassword = credentialStore.getPassword(uid)
-        val mergedSip = parsedProfile.sipConfig?.copy(password = localPassword)
-        // Drop any legacy sip.password node that older clients wrote to RTDB.
-        if (uid.isNotEmpty() && uid != UserProfile.GUEST_UID) {
-            try {
-                getDatabaseInstance().getReference("users").child(uid).child("sip").child("password").removeValue()
-            } catch (e: Exception) {
-                Log.w("DialerRepository", "Could not clear legacy remote SIP password: ${e.message}")
+        val isSignedInUser = uid.isNotEmpty() && uid != UserProfile.GUEST_UID
+        val localPassword = if (isSignedInUser) credentialStore.getPassword(uid) else ""
+        val mergedSip = parsedProfile.sipConfig?.withResolvedPassword(localPassword)
+        if (isSignedInUser) {
+            val resolvedPassword = mergedSip?.password.orEmpty()
+            if (resolvedPassword.isNotBlank() && resolvedPassword != localPassword) {
+                credentialStore.savePassword(uid, resolvedPassword)
             }
         }
 

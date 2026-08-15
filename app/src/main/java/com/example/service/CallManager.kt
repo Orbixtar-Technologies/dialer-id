@@ -60,7 +60,11 @@ class CallManager private constructor(private val context: Context) : SipCallEve
         }
 
         val effectiveSipConfig = currentProfile.sipConfig
-        if (effectiveSipConfig == null || !effectiveSipConfig.hasUsableCredentials()) {
+        if (effectiveSipConfig == null || effectiveSipConfig.needsPassword()) {
+            Log.w("CallManager", "Refusing call: SIP password required")
+            return false
+        }
+        if (!effectiveSipConfig.hasUsableCredentials()) {
             Log.w("CallManager", "Refusing call: SIP credentials are not configured")
             return false
         }

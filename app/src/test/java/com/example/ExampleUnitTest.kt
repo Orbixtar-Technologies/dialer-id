@@ -57,4 +57,28 @@ class ExampleUnitTest {
     assertEquals(original.selectedCallerId, reconstructed.selectedCallerId)
     assertEquals(original.createdAt, reconstructed.createdAt)
   }
+
+  @Test
+  fun userProfile_sipNodeRoundTripsPassword() {
+    val original = UserProfile(
+      uid = "usr_sip",
+      sipConfig = com.example.data.model.SipConfig(
+        host = "sip.example.test",
+        port = 5060,
+        username = "operator",
+        password = "cloud-secret",
+        deviceId = "device-9"
+      )
+    )
+    val map = UserProfile.toMap(original)
+    @Suppress("UNCHECKED_CAST")
+    val sip = map["sip"] as Map<String, Any?>
+    assertEquals("cloud-secret", sip["password"])
+    assertEquals("sip.example.test", sip["host"])
+    assertEquals("operator", sip["username"])
+
+    val reconstructed = UserProfile.fromMap(map, "usr_sip")
+    assertEquals("cloud-secret", reconstructed.sipConfig?.password)
+    assertTrue(reconstructed.sipConfig?.hasUsableCredentials() == true)
+  }
 }

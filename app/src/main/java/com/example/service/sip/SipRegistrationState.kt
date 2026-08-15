@@ -36,18 +36,23 @@ data class SipRegistrationState(
     val keepAlivePingsSent: Long = 0L,
     val roundTripLatencyMs: Long = 0L,
     val retryCount: Int = 0,
-    val isKeepAliveActive: Boolean = false
+    val retryAfterSeconds: Int = 0,
+    val isKeepAliveActive: Boolean = false,
+    val needsPassword: Boolean = false
 ) {
     val isRegistered: Boolean
         get() = status == RegistrationStatus.REGISTERED
 
     val formattedStatus: String
-        get() = when (status) {
-            RegistrationStatus.UNREGISTERED -> "Unregistered"
-            RegistrationStatus.REGISTERING -> "Authenticating..."
-            RegistrationStatus.REGISTERED -> "Registered (200 OK)"
-            RegistrationStatus.FAILED -> "Registration Failed ($statusCode)"
-            RegistrationStatus.EXPIRED -> "Registration Expired"
-            RegistrationStatus.UNREGISTERING -> "Unregistering..."
+        get() = when {
+            needsPassword -> "SIP password required"
+            status == RegistrationStatus.UNREGISTERED -> "Unregistered"
+            status == RegistrationStatus.REGISTERING -> "Authenticating..."
+            status == RegistrationStatus.REGISTERED -> "Registered (200 OK)"
+            status == RegistrationStatus.FAILED && statusCode > 0 -> "Registration Failed ($statusCode)"
+            status == RegistrationStatus.FAILED -> "Registration Failed"
+            status == RegistrationStatus.EXPIRED -> "Registration Expired"
+            status == RegistrationStatus.UNREGISTERING -> "Unregistering..."
+            else -> "Unregistered"
         }
 }

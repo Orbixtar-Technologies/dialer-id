@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">DialerID</string>
+    <string name="dialer_enter_number">Enter number…</string>
+    <string name="dialer_backspace">Backspace</string>
+    <string name="dialer_place_call">Place Call</string>
+    <string name="dialer_status_registered">Status: Registered</string>
+    <string name="dialer_status_password_required">Status: SIP password required</string>
+    <string name="dialer_status_failed_code">Status: Failed (%1$d)</string>
+    <string name="dialer_status_failed">Status: %1$s</string>
+    <string name="dialer_status_not_registered">Status: Not Registered</string>
+    <string name="dialer_registration_failed">Registration failed</string>
+    <string name="dialer_not_registered">Not Registered</string>
+    <string name="dialer_top_up_to_call">Top Up Credits to Call</string>
+    <string name="dialer_start_call">Start Call</string>
 </resources>

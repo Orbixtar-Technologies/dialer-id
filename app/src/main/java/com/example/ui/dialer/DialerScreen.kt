@@ -1,7 +1,6 @@
 package com.example.ui.dialer
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -9,7 +8,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,73 +25,60 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.CallerIdItem
+import com.example.R
+import com.example.service.sip.RegistrationStatus
 import com.example.ui.theme.Amber50
 import com.example.ui.theme.Amber500
 import com.example.ui.theme.Amber600
 import com.example.ui.theme.Emerald500
-import com.example.ui.theme.Emerald600
 import com.example.ui.theme.PureWhite
-import com.example.ui.theme.RoyalBlue50
+import com.example.ui.theme.Rose500
 import com.example.ui.theme.RoyalBlue600
-import com.example.ui.theme.RoyalBlue700
-import com.example.ui.theme.RoyalBlue800
-import com.example.ui.theme.Slate100
 import com.example.ui.theme.Slate200
 import com.example.ui.theme.Slate300
 import com.example.ui.theme.Slate400
 import com.example.ui.theme.Slate50
 import com.example.ui.theme.Slate500
 import com.example.ui.theme.Slate700
-import com.example.ui.theme.Slate800
 import com.example.ui.theme.Slate900
 
 @Composable
 fun DialerScreen(
     viewModel: DialerViewModel,
     onNavigateToDeposit: () -> Unit,
-    onNavigateToCallerIds: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
-    val callerIds by viewModel.allCallerIds.collectAsState()
     val regState by viewModel.registrationState.collectAsState()
     val haptic = LocalHapticFeedback.current
 
@@ -116,272 +101,83 @@ fun DialerScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 0. SIP Trunk Live Registration & NAT Keep-Alive Status Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val dotColor = when (regState.status) {
-                        com.example.service.sip.RegistrationStatus.REGISTERED -> Emerald500
-                        com.example.service.sip.RegistrationStatus.REGISTERING -> RoyalBlue600
-                        com.example.service.sip.RegistrationStatus.FAILED -> com.example.ui.theme.Rose500
-                        else -> Slate400
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(dotColor, CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (regState.isRegistered) {
-                            "Status: Registered"
-                        } else {
-                            "Status: Not Registered"
-                        },
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = if (regState.isRegistered) Slate700 else Slate500
-                    )
+                val dotColor = when {
+                    regState.needsPassword -> Rose500
+                    regState.status == RegistrationStatus.REGISTERED -> Emerald500
+                    regState.status == RegistrationStatus.REGISTERING -> RoyalBlue600
+                    regState.status == RegistrationStatus.FAILED -> Rose500
+                    else -> Slate400
                 }
-
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = if (regState.isRegistered) com.example.ui.theme.Emerald50 else Slate100
-                ) {
-                    Text(
-                        text = if (regState.isRegistered) "Online" else "Offline",
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
-                        color = if (regState.isRegistered) Emerald600 else Slate500
-                    )
-                }
-            }
-
-            // 1. Outbound Identity Dropdown Selector Card
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Card(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.toggleCallerIdDropdown(true) }
-                        .border(1.dp, Slate200, RoundedCornerShape(14.dp))
-                        .testTag("caller_id_selector"),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = PureWhite)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(RoyalBlue50),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountCircle,
-                                    contentDescription = "Identity",
-                                    tint = RoyalBlue600,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Outbound Caller ID",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Slate500
-                                )
-                                Text(
-                                    text = userProfile.selectedCallerId.ifEmpty { "Default Caller ID" },
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = Slate900,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(RoyalBlue50)
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "ACTIVE",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = RoyalBlue800,
-                                    fontSize = 10.sp
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Select Caller ID",
-                                tint = Slate500
-                            )
-                        }
-                    }
-                }
-
-                // Dropdown menu
-                DropdownMenu(
-                    expanded = uiState.showCallerIdDropdown,
-                    onDismissRequest = { viewModel.toggleCallerIdDropdown(false) },
-                    modifier = Modifier
-                        .background(PureWhite)
-                        .border(1.dp, Slate200, RoundedCornerShape(12.dp))
-                ) {
-                    Text(
-                        text = "SELECT TRANSMITTED IDENTITY",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Slate500,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-
-                    callerIds.forEach { cid ->
-                        DropdownMenuItem(
-                            text = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = cid.label,
-                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                            color = Slate900
-                                        )
-                                        Text(
-                                            text = cid.phoneNumber,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Slate500
-                                        )
-                                    }
-                                    if (cid.phoneNumber == userProfile.selectedCallerId) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Selected",
-                                            tint = RoyalBlue600,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            },
-                            onClick = { viewModel.selectCallerId(cid) }
+                        .size(8.dp)
+                        .background(dotColor, CircleShape)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = when {
+                        regState.isRegistered -> stringResource(R.string.dialer_status_registered)
+                        regState.needsPassword -> stringResource(R.string.dialer_status_password_required)
+                        regState.status == RegistrationStatus.FAILED &&
+                            regState.statusCode > 0 -> stringResource(
+                            R.string.dialer_status_failed_code,
+                            regState.statusCode
                         )
-                    }
-
-                    DropdownMenuItem(
-                        text = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Add",
-                                    tint = RoyalBlue600,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Manage / Add Identities...",
-                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = RoyalBlue600
-                                )
-                            }
-                        },
-                        onClick = {
-                            viewModel.toggleCallerIdDropdown(false)
-                            onNavigateToCallerIds()
-                        }
-                    )
-                }
+                        regState.status == RegistrationStatus.FAILED ->
+                            stringResource(
+                                R.string.dialer_status_failed,
+                                regState.lastError ?: stringResource(R.string.dialer_registration_failed)
+                            )
+                        else -> stringResource(R.string.dialer_status_not_registered)
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (regState.isRegistered) Slate700 else Slate500
+                )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // 2. Destination Phone Input Display Area
-            Card(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Slate200, RoundedCornerShape(16.dp)),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = PureWhite)
+                    .border(1.dp, Slate200, RoundedCornerShape(14.dp)),
+                shape = RoundedCornerShape(14.dp),
+                color = PureWhite
             ) {
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 12.dp, vertical = 22.dp)
                 ) {
-                    // Country and rate indicator
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "${uiState.detectedCountry.flagEmoji} ${uiState.detectedCountry.name}",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                            color = Slate500
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "•", color = Slate300, fontSize = 12.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isTestNumber) "Diagnostics (Free)" else "$${String.format("%.3f", uiState.estimatedRate)}/min",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = if (isTestNumber) Emerald600 else RoyalBlue600
-                            )
-                        )
-                    }
+                    Text(
+                        text = if (uiState.formattedDisplay.isEmpty()) {
+                            stringResource(R.string.dialer_enter_number)
+                        } else {
+                            uiState.formattedDisplay
+                        },
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.8.sp
+                        ),
+                        color = if (uiState.formattedDisplay.isEmpty()) Slate400 else Slate900,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 44.dp)
+                            .testTag("dialer_display_text")
+                    )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Number input display with Backspace
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Spacer(modifier = Modifier.size(40.dp)) // Balance backspace
-
-                        Text(
-                            text = if (uiState.formattedDisplay.isEmpty()) "Enter number..." else uiState.formattedDisplay,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            ),
-                            color = if (uiState.formattedDisplay.isEmpty()) Slate300 else Slate900,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("dialer_display_text")
-                        )
-
-                        // Backspace with long-press to clear all
+                    if (uiState.inputNumber.isNotEmpty()) {
                         @OptIn(ExperimentalFoundationApi::class)
                         Box(
                             modifier = Modifier
+                                .align(Alignment.CenterEnd)
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .combinedClickable(
@@ -399,8 +195,8 @@ fun DialerScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Backspace,
-                                contentDescription = "Backspace",
-                                tint = if (uiState.inputNumber.isNotEmpty()) Slate700 else Slate300,
+                                contentDescription = stringResource(R.string.dialer_backspace),
+                                tint = Slate700,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -408,38 +204,8 @@ fun DialerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Quick Diagnostic / Test Line Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                QuickTestButton(
-                    title = "Audio Tones (3200)",
-                    subtitle = "Echo Test",
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.fillTestNumber("3200")
-                    },
-                    modifier = Modifier.weight(1f),
-                    testTag = "test_audio_tones_button"
-                )
-                QuickTestButton(
-                    title = "Line Health (444)",
-                    subtitle = "Latency & Jitter",
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.fillTestNumber("444")
-                    },
-                    modifier = Modifier.weight(1f),
-                    testTag = "test_health_check_button"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 3. Ergonomic Keypad (12 Digits)
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -479,7 +245,6 @@ fun DialerScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 4. Zero Balance Warning Banner (Call Guard)
             AnimatedVisibility(
                 visible = uiState.showZeroBalanceWarning || (hasZeroBalance && !isTestNumber && uiState.inputNumber.isNotEmpty()),
                 enter = fadeIn() + slideInVertically(),
@@ -534,7 +299,6 @@ fun DialerScreen(
                 }
             }
 
-            // 5. Start Call Button
             Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -564,16 +328,16 @@ fun DialerScreen(
                 ) {
                     Icon(
                         imageVector = if (isCallAllowed) Icons.Default.Call else Icons.Default.Lock,
-                        contentDescription = "Place Call",
+                        contentDescription = stringResource(R.string.dialer_place_call),
                         tint = PureWhite,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = when {
-                            !regState.isRegistered -> "Not Registered"
-                            !isCallAllowed -> "Top Up Credits to Call"
-                            else -> "Start Call"
+                            !regState.isRegistered -> stringResource(R.string.dialer_not_registered)
+                            !isCallAllowed -> stringResource(R.string.dialer_top_up_to_call)
+                            else -> stringResource(R.string.dialer_start_call)
                         },
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = PureWhite
@@ -633,50 +397,6 @@ private fun KeypadKey(
                     color = Slate400
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun QuickTestButton(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    testTag: String
-) {
-    Card(
-        modifier = modifier
-            .clickable { onClick() }
-            .border(1.dp, Slate200, RoundedCornerShape(12.dp))
-            .testTag(testTag),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = PureWhite)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                    color = RoyalBlue600
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Slate500
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Fill",
-                tint = Slate400,
-                modifier = Modifier.size(14.dp)
-            )
         }
     }
 }

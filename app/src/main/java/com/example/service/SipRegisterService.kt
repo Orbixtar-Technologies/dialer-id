@@ -106,6 +106,10 @@ class SipRegisterService : Service() {
         super.onCreate()
         INSTANCE = this
         createNotificationChannel()
+        // Must promote to FGS before any Linphone/Firebase work. Otherwise
+        // startForegroundService() from MainActivity times out while SipEngine
+        // constructs the Core on the main thread.
+        enterForeground(SipRegistrationState(statusMessage = "Starting SIP registration"))
 
         val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
         wakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DialerID:SipRegisterWakeLock")?.apply {
@@ -134,22 +138,9 @@ class SipRegisterService : Service() {
         when (action) {
             ACTION_START_REGISTRATION -> {
                 wakeLock?.acquire(3600_000L)
-                val notification = buildRegistrationNotification(
+                enterForeground(
                     sipEngine?.registrationState?.value ?: SipRegistrationState()
                 )
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        startForeground(
-                            NOTIFICATION_ID,
-                            notification,
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                        )
-                    } else {
-                        startForeground(NOTIFICATION_ID, notification)
-                    }
-                } catch (e: Exception) {
-                    Log.w(tag, "Foreground service start warning: ${e.message}")
-                }
 
                 val host = intent?.getStringExtra(EXTRA_HOST)
                 val port = intent?.getIntExtra(EXTRA_PORT, 5060) ?: 5060
@@ -209,7 +200,33 @@ class SipRegisterService : Service() {
     }
 
     private fun syncRegistration(profile: UserProfile, explicitConfig: SipConfig?) {
-        val config = usableConfig(profile, explicitConfig)
+        if (profile.isGuest) {
+            if (lastRegisterFingerprint != null) {
+                lastRegisterFingerprint = null
+                sipEngine?.unregister()
+            }
+            return
+        }
+        val candidate = explicitConfig ?: profile.sipConfig
+        Log.d(
+            tag,
+            "syncRegistration guest=${profile.isGuest} host=${candidate?.host.orEmpty()} " +
+                "user=${candidate?.username.orEmpty()} usable=${candidate?.hasUsableCredentials() == true} " +
+                "needsPassword=${candidate?.needsPassword() == true}"
+        )
+        if (candidate == null) {
+            if (lastRegisterFingerprint != null) {
+                lastRegisterFingerprint = null
+                sipEngine?.unregister()
+            }
+            return
+        }
+        if (candidate.needsPassword()) {
+            lastRegisterFingerprint = null
+            sipEngine?.register(candidate)
+            return
+        }
+        val config = candidate.takeIf { it.hasUsableCredentials() }
         if (config == null) {
             if (lastRegisterFingerprint != null) {
                 lastRegisterFingerprint = null
@@ -218,7 +235,13 @@ class SipRegisterService : Service() {
             return
         }
         val fingerprint = config.registrationFingerprint()
-        if (fingerprint == lastRegisterFingerprint && sipEngine?.isRegistered == true) {
+        val status = sipEngine?.registrationState?.value?.status
+        if (fingerprint == lastRegisterFingerprint &&
+            (status == RegistrationStatus.REGISTERED ||
+                status == RegistrationStatus.REGISTERING ||
+                status == RegistrationStatus.FAILED)
+        ) {
+            // Engine owns 503/timeout backoff. Do not tear down the account on every profile emit.
             return
         }
         lastRegisterFingerprint = fingerprint
@@ -241,6 +264,23 @@ class SipRegisterService : Service() {
         }
     }
 
+    private fun enterForeground(state: SipRegistrationState) {
+        val notification = buildRegistrationNotification(state)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.w(tag, "Foreground service start warning: ${e.message}")
+        }
+    }
+
     private fun updateNotification(state: SipRegistrationState) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         manager?.notify(NOTIFICATION_ID, buildRegistrationNotification(state))
@@ -254,19 +294,20 @@ class SipRegisterService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val title = when (state.status) {
-            RegistrationStatus.REGISTERED -> "SIP Connected"
-            RegistrationStatus.REGISTERING -> "Registering SIP..."
-            RegistrationStatus.EXPIRED -> "SIP Registration Expired"
-            RegistrationStatus.FAILED -> "SIP Registration Error"
-            RegistrationStatus.UNREGISTERING -> "SIP Disconnecting"
-            RegistrationStatus.UNREGISTERED -> "SIP Offline"
+        val title = when {
+            state.needsPassword -> "SIP Password Required"
+            state.status == RegistrationStatus.REGISTERED -> "SIP Connected"
+            state.status == RegistrationStatus.REGISTERING -> "Registering SIP..."
+            state.status == RegistrationStatus.EXPIRED -> "SIP Registration Expired"
+            state.status == RegistrationStatus.FAILED -> "SIP Registration Error"
+            state.status == RegistrationStatus.UNREGISTERING -> "SIP Disconnecting"
+            else -> "SIP Offline"
         }
 
-        val content = if (state.isRegistered) {
-            "${state.username}@${state.host}"
-        } else {
-            state.statusMessage.ifBlank { "Configure SIP credentials in Settings" }
+        val content = when {
+            state.isRegistered -> "${state.username}@${state.host}"
+            state.needsPassword -> "Re-enter SIP password in Settings"
+            else -> state.statusMessage.ifBlank { "Configure SIP credentials in Settings" }
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)

@@ -15,8 +15,9 @@ data class BalanceCache(
 )
 
 /**
- * SipConfig for the local SIP stack. The password field is local-only and must
- * never be written to Firebase RTDB.
+ * SIP trunk config stored at users/{uid}/sip in Firebase Realtime Database.
+ * Fields: callerId, deviceId, host, password, port, username, updatedAt.
+ * EncryptedSharedPreferences may cache the password, but RTDB is the source of truth.
  */
 @IgnoreExtraProperties
 data class SipConfig(
@@ -28,12 +29,29 @@ data class SipConfig(
     var username: String = "",
     var updatedAt: Long = System.currentTimeMillis()
 ) {
+    fun hasIdentity(): Boolean {
+        return host.isNotBlank() && username.isNotBlank()
+    }
+
+    fun needsPassword(): Boolean {
+        return hasIdentity() && password.isBlank()
+    }
+
     fun hasUsableCredentials(): Boolean {
-        return host.isNotBlank() && username.isNotBlank() && password.isNotBlank()
+        return hasIdentity() && password.isNotBlank()
     }
 
     fun registrationFingerprint(): String {
-        return "$host|$port|$username|$password"
+        return "$host|$port|$username|$password|$deviceId"
+    }
+
+    /**
+     * Prefer the RTDB password; fall back to the local cache when the cloud
+     * node was already cleared by an older client.
+     */
+    fun withResolvedPassword(localPassword: String): SipConfig {
+        val resolved = password.ifBlank { localPassword }
+        return if (resolved == password) this else copy(password = resolved)
     }
 
     fun toRemoteMap(): Map<String, Any?> {
@@ -41,6 +59,7 @@ data class SipConfig(
             "callerId" to callerId,
             "deviceId" to deviceId,
             "host" to host,
+            "password" to password,
             "port" to port,
             "username" to username,
             "updatedAt" to updatedAt
@@ -272,7 +291,11 @@ data class UserProfile(
                     callerId = (nestedSip["callerId"] as? String) ?: selectedCallerId,
                     deviceId = (nestedSip["deviceId"]?.toString()) ?: "",
                     host = (nestedSip["host"] as? String) ?: "",
-                    password = "",
+                    password = when (val raw = nestedSip["password"]) {
+                        is String -> raw
+                        is Number -> raw.toString()
+                        else -> ""
+                    },
                     port = portVal,
                     username = (nestedSip["username"] as? String) ?: "",
                     updatedAt = (nestedSip["updatedAt"] as? Number)?.toLong() ?: System.currentTimeMillis()

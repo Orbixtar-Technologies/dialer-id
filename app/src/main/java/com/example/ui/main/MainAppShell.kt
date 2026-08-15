@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Dialpad
 import coil.compose.AsyncImage
 import androidx.compose.material.icons.filled.History
@@ -82,9 +81,6 @@ import com.example.ui.history.CallHistoryScreen
 import com.example.ui.history.CallHistoryViewModel
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.settings.SettingsViewModel
-import com.example.ui.theme.Emerald50
-import com.example.ui.theme.Emerald500
-import com.example.ui.theme.Emerald600
 import com.example.ui.theme.PureWhite
 import com.example.ui.theme.RoyalBlue50
 import com.example.ui.theme.RoyalBlue600
@@ -192,34 +188,8 @@ fun MainAppShell(
                             }
                         }
 
-                        // Right side: Firestore Sync Dot + Live Balance Pill
+                        // Right side: Live Balance Pill
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Firestore Sync Pill
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(if (userProfile.isCloudSynced) Emerald50 else RoyalBlue50)
-                                    .clickable { currentTab = AppTab.SETTINGS }
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(if (userProfile.isCloudSynced) Emerald500 else RoyalBlue600)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = if (userProfile.isCloudSynced) "Cloud" else "Ready",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = if (userProfile.isCloudSynced) Emerald600 else RoyalBlue700,
-                                    fontSize = 10.sp
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
                             // Live Balance Pill with + Add button
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -320,8 +290,7 @@ fun MainAppShell(
                 when (currentTab) {
                     AppTab.DIALER -> DialerScreen(
                         viewModel = dialerViewModel,
-                        onNavigateToDeposit = { currentTab = AppTab.DEPOSIT },
-                        onNavigateToCallerIds = { currentTab = AppTab.CALLER_IDS }
+                        onNavigateToDeposit = { currentTab = AppTab.DEPOSIT }
                     )
                     AppTab.HISTORY -> CallHistoryScreen(
                         viewModel = historyViewModel,

@@ -3,7 +3,6 @@ package com.example.ui.dialer
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.model.CallerIdItem
 import com.example.data.model.UserProfile
 import com.example.data.repository.DialerRepository
 import com.example.service.ActiveCallInfo
@@ -13,10 +12,8 @@ import com.example.ui.common.CountryInfo
 import com.example.ui.common.CountryUtils
 import com.example.util.PhoneNumberSanitizer
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -25,8 +22,7 @@ data class DialerUiState(
     val formattedDisplay: String = "",
     val detectedCountry: CountryInfo = CountryUtils.COUNTRIES.first(),
     val estimatedRate: Double = 0.015,
-    val showZeroBalanceWarning: Boolean = false,
-    val showCallerIdDropdown: Boolean = false
+    val showZeroBalanceWarning: Boolean = false
 )
 
 class DialerViewModel(application: Application) : AndroidViewModel(application) {
@@ -35,8 +31,6 @@ class DialerViewModel(application: Application) : AndroidViewModel(application) 
     private val callManager = CallManager.getInstance(application)
 
     val userProfile: StateFlow<UserProfile> = repository.userProfile
-    val allCallerIds: StateFlow<List<CallerIdItem>> = repository.allCallerIds
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val activeCallState: StateFlow<ActiveCallInfo> = callManager.callState
     val registrationState = callManager.sipEngine.registrationState
@@ -46,10 +40,21 @@ class DialerViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         viewModelScope.launch {
+            userProfile.collect { profile ->
+                if (!profile.isGuest && profile.sipConfig?.hasUsableCredentials() == true) {
+                    SipRegisterService.start(getApplication())
+                }
+            }
+        }
+        viewModelScope.launch {
             while (isActive) {
                 val profile = userProfile.value
                 val state = registrationState.value
-                if (!profile.isGuest && profile.sipConfig?.hasUsableCredentials() == true && !state.isRegistered) {
+                if (!profile.isGuest &&
+                    profile.sipConfig?.hasUsableCredentials() == true &&
+                    !state.isRegistered &&
+                    state.status != com.example.service.sip.RegistrationStatus.REGISTERING
+                ) {
                     SipRegisterService.refresh(getApplication())
                 }
                 kotlinx.coroutines.delay(30_000L)
@@ -60,7 +65,11 @@ class DialerViewModel(application: Application) : AndroidViewModel(application) 
     fun onScreenOpened() {
         val profile = userProfile.value
         val state = registrationState.value
-        if (!profile.isGuest && profile.sipConfig?.hasUsableCredentials() == true && !state.isRegistered) {
+        if (!profile.isGuest &&
+            profile.sipConfig?.hasUsableCredentials() == true &&
+            !state.isRegistered &&
+            state.status != com.example.service.sip.RegistrationStatus.REGISTERING
+        ) {
             SipRegisterService.refresh(getApplication())
         }
     }
@@ -88,10 +97,6 @@ class DialerViewModel(application: Application) : AndroidViewModel(application) 
         updateNumber(number)
     }
 
-    fun fillTestNumber(number: String) {
-        updateNumber(number)
-    }
-
     private fun updateNumber(number: String) {
         val sanitized = PhoneNumberSanitizer.filterDialInput(number)
         val (country, rate) = CountryUtils.estimateRateForNumber(sanitized)
@@ -103,15 +108,6 @@ class DialerViewModel(application: Application) : AndroidViewModel(application) 
             estimatedRate = rate,
             showZeroBalanceWarning = false
         )
-    }
-
-    fun selectCallerId(callerId: CallerIdItem) {
-        repository.updateSelectedCallerId(callerId.phoneNumber)
-        _uiState.value = _uiState.value.copy(showCallerIdDropdown = false)
-    }
-
-    fun toggleCallerIdDropdown(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showCallerIdDropdown = show)
     }
 
     fun placeCall(): Boolean {

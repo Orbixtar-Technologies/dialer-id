@@ -577,6 +577,15 @@ fun SettingsScreen(
                         title = "SIP Username",
                         badge = sip?.username?.ifEmpty { "Not configured" } ?: "Not configured"
                     )
+                    if (sip?.needsPassword() == true || regState.needsPassword) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "SIP password required. Sign in so credentials can load from Firebase, or enter them in Configure Trunk.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Rose500,
+                            modifier = Modifier.testTag("sip_password_required_notice")
+                        )
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
                     InfoStatusRow(
                         icon = Icons.Default.PhoneAndroid,
@@ -660,12 +669,14 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            val dotColor = when (regState.status) {
-                                RegistrationStatus.REGISTERED -> Emerald500
-                                RegistrationStatus.REGISTERING, RegistrationStatus.UNREGISTERING -> RoyalBlue600
-                                RegistrationStatus.EXPIRED -> Slate500
-                                RegistrationStatus.FAILED -> Rose500
-                                RegistrationStatus.UNREGISTERED -> Slate400
+                            val dotColor = when {
+                                regState.needsPassword -> Rose500
+                                regState.status == RegistrationStatus.REGISTERED -> Emerald500
+                                regState.status == RegistrationStatus.REGISTERING ||
+                                    regState.status == RegistrationStatus.UNREGISTERING -> RoyalBlue600
+                                regState.status == RegistrationStatus.EXPIRED -> Slate500
+                                regState.status == RegistrationStatus.FAILED -> Rose500
+                                else -> Slate400
                             }
                             Box(
                                 modifier = Modifier
@@ -680,21 +691,24 @@ fun SettingsScreen(
                             )
                         }
 
-                        val badgeBg = when (regState.status) {
-                            RegistrationStatus.REGISTERED -> Emerald50
-                            RegistrationStatus.FAILED -> Rose50
+                        val badgeBg = when {
+                            regState.needsPassword || regState.status == RegistrationStatus.FAILED -> Rose50
+                            regState.status == RegistrationStatus.REGISTERED -> Emerald50
                             else -> RoyalBlue50
                         }
-                        val badgeText = when (regState.status) {
-                            RegistrationStatus.REGISTERED -> "200 OK Active"
-                            RegistrationStatus.REGISTERING -> "Challenging 401..."
-                            RegistrationStatus.FAILED -> "Error ${regState.statusCode}"
-                            RegistrationStatus.EXPIRED -> "Expired"
+                        val badgeText = when {
+                            regState.needsPassword -> "Password required"
+                            regState.status == RegistrationStatus.REGISTERED -> "200 OK Active"
+                            regState.status == RegistrationStatus.REGISTERING -> "Challenging 401..."
+                            regState.status == RegistrationStatus.FAILED && regState.statusCode > 0 ->
+                                "Error ${regState.statusCode}"
+                            regState.status == RegistrationStatus.FAILED -> "Auth failed"
+                            regState.status == RegistrationStatus.EXPIRED -> "Expired"
                             else -> "Standby"
                         }
-                        val badgeColor = when (regState.status) {
-                            RegistrationStatus.REGISTERED -> Emerald600
-                            RegistrationStatus.FAILED -> Rose500
+                        val badgeColor = when {
+                            regState.needsPassword || regState.status == RegistrationStatus.FAILED -> Rose500
+                            regState.status == RegistrationStatus.REGISTERED -> Emerald600
                             else -> RoyalBlue700
                         }
                         Surface(
@@ -1289,6 +1303,11 @@ fun SettingsScreen(
                             value = uiState.editSipPassword,
                             onValueChange = viewModel::onEditSipPasswordChanged,
                             label = { Text("SIP Secret / Password") },
+                            supportingText = {
+                                if (userProfile.sipConfig?.needsPassword() == true || uiState.editSipPassword.isBlank()) {
+                                    Text("Required. Stored only on this device after save.")
+                                }
+                            },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth().testTag("edit_sip_pass_input"),
                             shape = RoundedCornerShape(10.dp),

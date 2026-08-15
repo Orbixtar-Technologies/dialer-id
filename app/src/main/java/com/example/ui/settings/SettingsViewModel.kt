@@ -176,10 +176,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun testSipConnection() {
         val config = configFromEditor()
-        if (!config.hasUsableCredentials()) {
+        if (config.needsPassword() || !config.hasUsableCredentials()) {
             _uiState.value = _uiState.value.copy(
                 isTestingSip = false,
-                sipTestResult = SipTestResult(false, 0, "Host, username, and password are required", 0)
+                sipTestResult = SipTestResult(
+                    false,
+                    0,
+                    if (config.needsPassword()) "SIP password required" else "Host, username, and password are required",
+                    0
+                )
             )
             return
         }
@@ -197,9 +202,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun saveSipConfig() {
         val config = configFromEditor()
-        if (!config.hasUsableCredentials()) {
+        if (config.needsPassword() || !config.hasUsableCredentials()) {
             _uiState.value = _uiState.value.copy(
-                toastMessage = "Host, username, and password are required"
+                toastMessage = if (config.needsPassword()) {
+                    "SIP password required"
+                } else {
+                    "Host, username, and password are required"
+                }
             )
             return
         }
@@ -216,7 +225,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
         _uiState.value = _uiState.value.copy(
             isEditSipDialogVisible = false,
-            toastMessage = "SIP configuration saved. Password stays on this device only."
+            toastMessage = "SIP configuration saved and synced to Realtime DB."
         )
     }
 
@@ -226,7 +235,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.value = _uiState.value.copy(toastMessage = "Configure SIP credentials first")
             return
         }
-        sipEngine.refreshNow()
+        sipEngine.refreshNow(force = true)
         _uiState.value = _uiState.value.copy(toastMessage = "Refreshing SIP registration...")
     }
 

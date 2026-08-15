@@ -7,7 +7,9 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
 /**
- * Local-only SIP password store. Passwords are never written to Firebase RTDB.
+ * Local cache of the SIP password. Firebase RTDB users/{uid}/sip is the source of
+ * truth; this store fills the gap when the cloud password is missing after an
+ * older client deleted it.
  */
 class SipCredentialStore(context: Context) {
 
@@ -18,20 +20,37 @@ class SipCredentialStore(context: Context) {
             clear(uid)
             return
         }
-        prefs.edit().putString(keyFor(uid), password).apply()
+        try {
+            prefs.edit().putString(keyFor(uid), password).apply()
+        } catch (e: Exception) {
+            Log.w(TAG, "Save SIP password cache failed: ${e.message}")
+        }
     }
 
     fun getPassword(uid: String): String {
         if (uid.isBlank() || uid == GUEST_UID) return ""
-        return prefs.getString(keyFor(uid), "") ?: ""
+        return try {
+            prefs.getString(keyFor(uid), "") ?: ""
+        } catch (e: Exception) {
+            Log.w(TAG, "Read SIP password cache failed: ${e.message}")
+            ""
+        }
     }
 
     fun clear(uid: String) {
-        prefs.edit().remove(keyFor(uid)).apply()
+        try {
+            prefs.edit().remove(keyFor(uid)).apply()
+        } catch (e: Exception) {
+            Log.w(TAG, "Clear SIP password cache failed: ${e.message}")
+        }
     }
 
     fun clearAll() {
-        prefs.edit().clear().apply()
+        try {
+            prefs.edit().clear().apply()
+        } catch (e: Exception) {
+            Log.w(TAG, "Clear all SIP password cache failed: ${e.message}")
+        }
     }
 
     private fun keyFor(uid: String): String = "sip_password_$uid"

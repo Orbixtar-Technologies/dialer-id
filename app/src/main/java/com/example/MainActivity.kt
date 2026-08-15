@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
         requestRequiredPermissions()
 
         val profile = com.example.data.repository.DialerRepository.getInstance(this).userProfile.value
-        if (!profile.isGuest && profile.sipConfig?.hasUsableCredentials() == true) {
+        if (!profile.isGuest) {
             com.example.service.SipRegisterService.start(this)
         }
 
@@ -51,8 +51,12 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         val profile = com.example.data.repository.DialerRepository.getInstance(this).userProfile.value
-        if (!profile.isGuest && profile.sipConfig?.hasUsableCredentials() == true) {
-            com.example.service.SipRegisterService.refresh(this)
+        if (!profile.isGuest) {
+            if (profile.sipConfig?.hasUsableCredentials() == true) {
+                com.example.service.SipRegisterService.refresh(this)
+            } else {
+                com.example.service.SipRegisterService.start(this)
+            }
         }
     }
 
