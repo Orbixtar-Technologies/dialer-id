@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -60,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -79,6 +79,9 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.common.AppFormError
 import com.example.ui.common.AppTextField
+import com.example.ui.common.SignalMark
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.glow
 
 @Composable
 fun GoogleLogoIcon(modifier: Modifier = Modifier) {
@@ -170,6 +173,12 @@ fun AuthScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .background(
+                Brush.verticalGradient(
+                    0f to MaterialTheme.colorScheme.glow,
+                    0.45f to Color.Transparent
+                )
+            )
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 20.dp),
         contentAlignment = Alignment.Center
@@ -183,20 +192,10 @@ fun AuthScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Phone,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(36.dp)
-                )
-            }
+            SignalMark(
+                size = 76.dp,
+                icon = Icons.Default.Phone
+            )
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -228,9 +227,10 @@ fun AuthScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
             ) {
                 Column(
                     modifier = Modifier

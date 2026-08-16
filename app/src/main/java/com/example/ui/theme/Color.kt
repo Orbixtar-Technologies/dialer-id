@@ -2,47 +2,60 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary & Brand Colors
-val RoyalBlue400 = Color(0xFF60A5FA)
-val RoyalBlue600 = Color(0xFF2563EB)
-val RoyalBlue700 = Color(0xFF1D4ED8)
-val RoyalBlue800 = Color(0xFF1E40AF)
-val RoyalBlue50 = Color(0xFFEFF6FF)
-val RoyalBlue100 = Color(0xFFDBEAFE)
+/**
+ * Signal Intelligence palette.
+ *
+ * Light mode is warm paper and ink — linen, not sterile gray.
+ * Dark mode is cinematic ink with a cool teal undertone, never washed charcoal.
+ * The accent is a locked-on teal (a "signal lock"), not generic Material blue.
+ */
 
-// Slate Neutrals
-val Slate50 = Color(0xFFF8FAFC)
-val Slate100 = Color(0xFFF1F5F9)
-val Slate200 = Color(0xFFE2E8F0)
-val Slate300 = Color(0xFFCBD5E1)
-val Slate400 = Color(0xFF94A3B8)
-val Slate500 = Color(0xFF64748B)
-val Slate600 = Color(0xFF475569)
-val Slate700 = Color(0xFF334155)
-val Slate800 = Color(0xFF1E293B)
-val Slate900 = Color(0xFF0F172A)
+// Brand / signal teal
+val SignalTeal50 = Color(0xFFE6F6F4)
+val SignalTeal100 = Color(0xFFC5EBE6)
+val SignalTeal200 = Color(0xFF8FD6CE)
+val SignalTeal400 = Color(0xFF3ECFC4)
+val SignalTeal500 = Color(0xFF1AA89E)
+val SignalTeal600 = Color(0xFF0D6E6A)
+val SignalTeal700 = Color(0xFF0A5754)
+val SignalTeal800 = Color(0xFF084441)
+val SignalTeal900 = Color(0xFF04312E)
+
+// Warm paper (light) + cinematic ink (dark)
+val Linen50 = Color(0xFFF7F3EA)
+val Linen100 = Color(0xFFEFE8DA)
+val Linen200 = Color(0xFFE3DAC6)
+val Linen300 = Color(0xFFD4C9B0)
+val Paper = Color(0xFFFFFCF6)
+val Ink50 = Color(0xFFF3EEE6)
+val Ink200 = Color(0xFFC9C2B6)
+val Ink400 = Color(0xFF8A8276)
+val Ink500 = Color(0xFF6B645A)
+val Ink600 = Color(0xFF4A453C)
+val Ink700 = Color(0xFF2C3642)
+val Ink800 = Color(0xFF1A2129)
+val Ink850 = Color(0xFF13181E)
+val Ink900 = Color(0xFF0C1014)
+val Ink950 = Color(0xFF080A0D)
 val PureWhite = Color(0xFFFFFFFF)
 
-// Semantic Accents.
-//
-// Each accent ships in a light-surface tone and a dark-surface tone so the same
-// meaning can be expressed on either background without dropping below the
-// WCAG AA contrast floor. The 400 tones are for dark surfaces, the 600/700
-// tones for light surfaces, and the 50 tones are container fills only - never
-// text or icons.
-val Emerald400 = Color(0xFF34D399)
-val Emerald500 = Color(0xFF10B981)
-val Emerald600 = Color(0xFF059669)
-val Emerald700 = Color(0xFF047857)
-val Emerald50 = Color(0xFFECFDF5)
+// Semantic — paired light/dark tones for AA contrast
+val SignalGreen400 = Color(0xFF3DDB8A)
+val SignalGreen600 = Color(0xFF1A7A4C)
+val SignalGreen700 = Color(0xFF14603C)
+val SignalGreen50 = Color(0xFFE6F7EE)
+val SignalGreen900 = Color(0xFF052E1A)
 
-val Rose400 = Color(0xFFFB7185)
-val Rose500 = Color(0xFFF43F5E)
-val Rose600 = Color(0xFFE11D48)
-val Rose700 = Color(0xFFBE123C)
-val Rose50 = Color(0xFFFFF1F2)
+val SignalRose400 = Color(0xFFFF8A80)
+val SignalRose600 = Color(0xFFC01D1D)
+val SignalRose700 = Color(0xFF9B1818)
+val SignalRose50 = Color(0xFFFFF1F0)
+val SignalRose900 = Color(0xFF3B0A0A)
 
-val Amber500 = Color(0xFFF59E0B)
-val Amber600 = Color(0xFFD97706)
-val Amber700 = Color(0xFFB45309)
-val Amber50 = Color(0xFFFFFBEB)
+val SignalAmber400 = Color(0xFFF0B429)
+val SignalAmber600 = Color(0xFFA15C07)
+val SignalAmber700 = Color(0xFF7A4505)
+val SignalAmber50 = Color(0xFFFFF6E0)
+val SignalAmber900 = Color(0xFF3D2A00)
+
+val TerminalGreen = Color(0xFF5EE9B5)

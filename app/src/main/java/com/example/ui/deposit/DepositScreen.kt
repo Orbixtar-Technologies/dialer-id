@@ -44,6 +44,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.BuildConfig
 import com.example.ui.common.formatBalance
+import com.example.ui.theme.DialerElevation
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.isLightScheme
 import com.example.ui.theme.onSuccessContainer
 import com.example.ui.theme.successContainer
 import java.util.Locale
@@ -59,7 +62,7 @@ fun DepositScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = androidx.compose.ui.graphics.Color.Transparent
     ) {
         Column(
             modifier = Modifier
@@ -72,11 +75,14 @@ fun DepositScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
             ) {
                 Column(
                     modifier = Modifier
@@ -164,11 +170,14 @@ fun DepositScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
             ) {
                 Column(
                     modifier = Modifier

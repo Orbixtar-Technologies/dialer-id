@@ -65,6 +65,10 @@ import com.example.R
 import com.example.data.model.CallerIdItem
 import com.example.ui.common.AppFormError
 import com.example.ui.common.AppTextField
+import com.example.ui.common.SignalEmptyState
+import com.example.ui.theme.DialerElevation
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.isLightScheme
 import com.example.ui.theme.onSuccessContainer
 import com.example.ui.theme.success
 
@@ -80,7 +84,7 @@ fun CallerIdScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = androidx.compose.ui.graphics.Color.Transparent
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
@@ -155,50 +159,17 @@ fun CallerIdScreen(
 
                 if (callerIds.isEmpty()) {
                     item {
-                        Surface(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 24.dp)
-                                .testTag("caller_id_empty_state"),
-                            color = MaterialTheme.colorScheme.surface,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            shape = RoundedCornerShape(16.dp)
+                                .testTag("caller_id_empty_state")
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Badge,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "No outbound caller IDs",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Add a number you control to send it as your caller ID.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
+                            SignalEmptyState(
+                                icon = Icons.Default.Badge,
+                                title = "No outbound caller IDs",
+                                body = "Add a number you control to send it as your caller ID."
+                            )
                         }
                     }
                 } else {
@@ -429,14 +400,17 @@ private fun CallerIdCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         border = BorderStroke(
-            if (item.isPrimary) 2.dp else 1.dp,
+            if (item.isPrimary) 1.5.dp else 1.dp,
             if (item.isPrimary) {
                 MaterialTheme.colorScheme.primary
             } else {
-                MaterialTheme.colorScheme.outlineVariant
+                MaterialTheme.colorScheme.glassBorder
             }
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp
         ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

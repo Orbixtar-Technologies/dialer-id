@@ -46,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -55,12 +54,15 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.Contact
 import com.example.ui.common.AppTextField
+import com.example.ui.common.SignalEmptyState
+import com.example.ui.theme.DialerElevation
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.isLightScheme
 import com.example.ui.theme.onSuccess
 import com.example.ui.theme.success
 
@@ -111,7 +113,7 @@ fun ContactsScreen(
         modifier = modifier
             .fillMaxSize()
             .testTag("contacts_screen"),
-        color = MaterialTheme.colorScheme.background
+        color = androidx.compose.ui.graphics.Color.Transparent
     ) {
         Column(
             modifier = Modifier
@@ -213,17 +215,25 @@ fun ContactsScreen(
 
                 uiState.contacts.isEmpty() -> {
                     val isSearching = uiState.query.isNotBlank()
-                    ContactsEmptyState(
-                        icon = if (isSearching) Icons.Default.SearchOff else Icons.Default.Contacts,
-                        title = stringResource(
-                            if (isSearching) R.string.contacts_no_results_title
-                            else R.string.contacts_empty_title
-                        ),
-                        body = stringResource(
-                            if (isSearching) R.string.contacts_no_results_body
-                            else R.string.contacts_empty_body
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 60.dp)
+                            .testTag("contacts_empty_state"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SignalEmptyState(
+                            icon = if (isSearching) Icons.Default.SearchOff else Icons.Default.Contacts,
+                            title = stringResource(
+                                if (isSearching) R.string.contacts_no_results_title
+                                else R.string.contacts_empty_title
+                            ),
+                            body = stringResource(
+                                if (isSearching) R.string.contacts_no_results_body
+                                else R.string.contacts_empty_body
+                            )
                         )
-                    )
+                    }
                 }
 
                 else -> {
@@ -307,9 +317,10 @@ private fun ContactRow(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("contact_row_${contact.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
@@ -371,64 +382,6 @@ private fun ContactRow(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
                     modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ContactsEmptyState(
-    icon: ImageVector,
-    title: String,
-    body: String
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 60.dp)
-            .testTag("contacts_empty_state"),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(26.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = body,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }

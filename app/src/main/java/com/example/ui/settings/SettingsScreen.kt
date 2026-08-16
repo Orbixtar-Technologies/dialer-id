@@ -98,14 +98,15 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.R
 import com.example.ui.common.AppTextField
-import com.example.ui.theme.Emerald400
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.RoyalBlue600
-import com.example.ui.theme.RoyalBlue800
-import com.example.ui.theme.Slate900
+import com.example.ui.theme.Ink950
+import com.example.ui.theme.TerminalGreen
+import com.example.ui.theme.glassBorder
 import com.example.ui.theme.onSuccessContainer
+import com.example.ui.theme.onWarningContainer
 import com.example.ui.theme.success
 import com.example.ui.theme.successContainer
+import com.example.ui.theme.warning
+import com.example.ui.theme.warningContainer
 import kotlinx.coroutines.delay
 
 @Composable
@@ -131,7 +132,7 @@ fun SettingsScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = androidx.compose.ui.graphics.Color.Transparent
     ) {
         Column(
             modifier = Modifier
@@ -206,7 +207,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(20.dp)
                     )
                     .testTag("realtime_profile_card"),
@@ -230,7 +231,10 @@ fun SettingsScreen(
                                     // Fixed brand gradient: dark enough for white
                                     // initials in either theme.
                                     Brush.linearGradient(
-                                        listOf(RoyalBlue600, RoyalBlue800)
+                                        listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     )
                                 ),
                             contentAlignment = Alignment.Center
@@ -256,7 +260,7 @@ fun SettingsScreen(
                                     text = initials,
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = PureWhite,
+                                        color = MaterialTheme.colorScheme.onPrimary,
                                         letterSpacing = 1.sp
                                     )
                                 )
@@ -489,7 +493,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(16.dp)
                     ),
                 shape = RoundedCornerShape(16.dp),
@@ -535,7 +539,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(16.dp)
                     ),
                 shape = RoundedCornerShape(16.dp),
@@ -631,7 +635,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(16.dp)
                     ),
                 shape = RoundedCornerShape(16.dp),
@@ -761,7 +765,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(16.dp)
                     ),
                 shape = RoundedCornerShape(16.dp),
@@ -1047,7 +1051,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(16.dp)
                     )
                     .testTag("sdp_diagnostics_card"),
@@ -1110,7 +1114,7 @@ fun SettingsScreen(
                                 .clip(RoundedCornerShape(10.dp))
                                 // Log console: deliberately a fixed dark terminal
                                 // in both themes so the dump reads as raw output.
-                                .background(Slate900)
+                                .background(Ink950)
                                 .padding(12.dp)
                         ) {
                             Text(
@@ -1120,7 +1124,7 @@ fun SettingsScreen(
                                     fontSize = 11.sp,
                                     lineHeight = 15.sp
                                 ),
-                                color = Emerald400
+                                color = TerminalGreen
                             )
                         }
 
@@ -1191,7 +1195,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
+                        color = MaterialTheme.colorScheme.glassBorder,
                         shape = RoundedCornerShape(16.dp)
                     ),
                 shape = RoundedCornerShape(16.dp),

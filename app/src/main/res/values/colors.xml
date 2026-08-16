@@ -8,7 +8,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Matches Compose `background` (Slate50) so the launch window does not
-         flash a colour the app never uses. values-night/ carries Slate900. -->
-    <color name="window_background">#FFF8FAFC</color>
+    <!-- Matches Compose `background` (Linen50) so the launch window does not
+         flash a colour the app never uses. values-night/ carries Ink950. -->
+    <color name="window_background">#FFF7F3EA</color>
+    <color name="signal_teal">#FF0D6E6A</color>
 </resources>

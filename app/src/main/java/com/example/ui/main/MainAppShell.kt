@@ -9,11 +9,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -81,8 +83,12 @@ import com.example.ui.dialer.DialerScreen
 import com.example.ui.dialer.DialerViewModel
 import com.example.ui.history.CallHistoryScreen
 import com.example.ui.history.CallHistoryViewModel
+import com.example.ui.common.SignalBackdrop
+import com.example.ui.common.SignalMark
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.settings.SettingsViewModel
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.isLightScheme
 
 enum class AppTab(
     val title: String,
@@ -131,208 +137,215 @@ fun MainAppShell(
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
+                val colors = MaterialTheme.colorScheme
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
+                    color = colors.surface.copy(alpha = if (colors.isLightScheme) 0.94f else 0.88f),
+                    shadowElevation = if (colors.isLightScheme) 1.dp else 0.dp,
+                    tonalElevation = 0.dp
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    Column {
                         Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .windowInsetsPadding(WindowInsets.statusBars)
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f, fill = false)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Phone,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = (-0.5).sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.main_hd_badge),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 10.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { showContacts = true },
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .testTag("topbar_contacts_button")
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primaryContainer),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Contacts,
-                                        contentDescription = stringResource(R.string.contacts_open),
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(4.dp))
-
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .heightIn(min = 36.dp)
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                                    .border(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                                        RoundedCornerShape(20.dp)
-                                    )
-                                    .clickable(
-                                        onClickLabel = stringResource(R.string.main_open_deposit)
-                                    ) { currentTab = AppTab.DEPOSIT }
-                                    .padding(start = 10.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
-                                    .testTag("topbar_balance_pill")
+                                modifier = Modifier.weight(1f, fill = false)
                             ) {
-                                Text(
-                                    text = "$${formatBalance(userProfile.creditBalance)}",
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = FontFamily.Monospace
-                                    ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    maxLines = 1
+                                SignalMark(
+                                    size = 38.dp,
+                                    icon = Icons.Default.Phone
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(14.dp)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = colors.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(colors.primaryContainer)
+                                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.main_hd_badge),
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 9.sp,
+                                                letterSpacing = 0.8.sp
+                                            ),
+                                            color = colors.onPrimaryContainer
+                                        )
+                                    }
                                 }
                             }
 
-                            if (!userProfile.photoUrl.isNullOrEmpty()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(
-                                    onClick = { currentTab = AppTab.SETTINGS },
+                                    onClick = { showContacts = true },
                                     modifier = Modifier
-                                        .size(44.dp)
-                                        .testTag("topbar_profile_button")
+                                        .size(48.dp)
+                                        .testTag("topbar_contacts_button")
                                 ) {
-                                    AsyncImage(
-                                        model = userProfile.photoUrl,
-                                        contentDescription = stringResource(R.string.main_open_settings),
+                                    Box(
                                         modifier = Modifier
-                                            .size(30.dp)
+                                            .size(36.dp)
                                             .clip(CircleShape)
-                                            .border(
-                                                1.dp,
-                                                MaterialTheme.colorScheme.outlineVariant,
-                                                CircleShape
-                                            )
+                                            .background(colors.surfaceContainer)
+                                            .border(1.dp, colors.glassBorder, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Contacts,
+                                            contentDescription = stringResource(R.string.contacts_open),
+                                            tint = colors.onSurface,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .heightIn(min = 40.dp)
+                                        .clip(RoundedCornerShape(22.dp))
+                                        .background(colors.primaryContainer)
+                                        .border(
+                                            1.dp,
+                                            colors.primary.copy(alpha = 0.22f),
+                                            RoundedCornerShape(22.dp)
+                                        )
+                                        .clickable(
+                                            onClickLabel = stringResource(R.string.main_open_deposit)
+                                        ) { currentTab = AppTab.DEPOSIT }
+                                        .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
+                                        .testTag("topbar_balance_pill")
+                                ) {
+                                    Text(
+                                        text = "$${formatBalance(userProfile.creditBalance)}",
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = FontFamily.Monospace,
+                                            letterSpacing = 0.2.sp
+                                        ),
+                                        color = colors.onPrimaryContainer,
+                                        maxLines = 1
                                     )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.primary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null,
+                                            tint = colors.onPrimary,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+
+                                if (!userProfile.photoUrl.isNullOrEmpty()) {
+                                    IconButton(
+                                        onClick = { currentTab = AppTab.SETTINGS },
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .testTag("topbar_profile_button")
+                                    ) {
+                                        AsyncImage(
+                                            model = userProfile.photoUrl,
+                                            contentDescription = stringResource(R.string.main_open_settings),
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .border(1.5.dp, colors.primary.copy(alpha = 0.35f), CircleShape)
+                                        )
+                                    }
                                 }
                             }
                         }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(colors.glassBorder)
+                        )
                     }
                 }
             },
             bottomBar = {
-                NavigationBar(
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp
+                val colors = MaterialTheme.colorScheme
+                Column(
+                    modifier = Modifier
+                        .background(colors.background)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(start = 16.dp, end = 16.dp, bottom = 10.dp, top = 4.dp)
                 ) {
-                    AppTab.entries.forEach { tab ->
-                        val isSelected = currentTab == tab && !showContacts
-                        NavigationBarItem(
-                            selected = isSelected,
-                            onClick = {
-                                currentTab = tab
-                                showContacts = false
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = tab.title,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            modifier = Modifier.testTag(tab.testTag)
-                        )
+                    NavigationBar(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(28.dp))
+                            .border(1.dp, colors.glassBorder, RoundedCornerShape(28.dp)),
+                        containerColor = colors.surface,
+                        tonalElevation = 0.dp,
+                        windowInsets = WindowInsets(0, 0, 0, 0)
+                    ) {
+                        AppTab.entries.forEach { tab ->
+                            val isSelected = currentTab == tab && !showContacts
+                            NavigationBarItem(
+                                selected = isSelected,
+                                onClick = {
+                                    currentTab = tab
+                                    showContacts = false
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = tab.title,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            letterSpacing = 0.2.sp
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = colors.onPrimaryContainer,
+                                    selectedTextColor = colors.primary,
+                                    indicatorColor = colors.primaryContainer,
+                                    unselectedIconColor = colors.onSurfaceVariant,
+                                    unselectedTextColor = colors.onSurfaceVariant
+                                ),
+                                modifier = Modifier.testTag(tab.testTag)
+                            )
+                        }
                     }
                 }
             }
         ) { innerPadding ->
-            Box(
+            SignalBackdrop(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(MaterialTheme.colorScheme.background)
             ) {
                 if (showContacts) {
                     ContactsScreen(

@@ -2,6 +2,7 @@ package com.example.ui.history
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,7 +59,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,8 +66,14 @@ import com.example.R
 import com.example.data.model.CallLogItem
 import com.example.data.model.CallStatus
 import com.example.ui.common.AppTextField
+import com.example.ui.common.SignalEmptyState
 import com.example.ui.common.formatBalance
+import com.example.ui.theme.DialerElevation
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.isLightScheme
+import com.example.ui.theme.missed
 import com.example.ui.theme.onSuccessContainer
+import com.example.ui.theme.outgoing
 import com.example.ui.theme.successContainer
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -89,7 +95,7 @@ fun CallHistoryScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = androidx.compose.ui.graphics.Color.Transparent
     ) {
         Column(
             modifier = Modifier
@@ -187,58 +193,19 @@ fun CallHistoryScreen(
                         .testTag("history_empty_state"),
                     contentAlignment = Alignment.Center
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.History,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = if (isSearching) {
-                                    stringResource(R.string.history_no_results_title)
-                                } else {
-                                    stringResource(R.string.history_empty_title)
-                                },
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = if (isSearching) {
-                                    stringResource(R.string.history_no_results_body)
-                                } else {
-                                    stringResource(R.string.history_empty_body)
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
+                    SignalEmptyState(
+                        icon = Icons.Default.History,
+                        title = if (isSearching) {
+                            stringResource(R.string.history_no_results_title)
+                        } else {
+                            stringResource(R.string.history_empty_title)
+                        },
+                        body = if (isSearching) {
+                            stringResource(R.string.history_no_results_body)
+                        } else {
+                            stringResource(R.string.history_empty_body)
                         }
-                    }
+                    )
                 }
             } else {
                 LazyColumn(
@@ -362,11 +329,14 @@ private fun CallLogCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("history_log_${log.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -388,6 +358,15 @@ private fun CallLogCard(
                                 } else {
                                     MaterialTheme.colorScheme.errorContainer
                                 }
+                            )
+                            .border(
+                                1.dp,
+                                if (isCompleted) {
+                                    MaterialTheme.colorScheme.outgoing.copy(alpha = 0.25f)
+                                } else {
+                                    MaterialTheme.colorScheme.missed.copy(alpha = 0.25f)
+                                },
+                                CircleShape
                             ),
                         contentAlignment = Alignment.Center
                     ) {

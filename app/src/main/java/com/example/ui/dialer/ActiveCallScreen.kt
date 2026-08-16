@@ -54,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -67,10 +68,13 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.service.ActiveCallInfo
 import com.example.service.CallPhase
-import com.example.ui.theme.onErrorContainer
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.glow
 import com.example.ui.theme.onSuccessContainer
 import com.example.ui.theme.onWarningContainer
+import com.example.ui.theme.success
 import com.example.ui.theme.successContainer
+import com.example.ui.theme.warning
 import com.example.ui.theme.warningContainer
 
 @Composable
@@ -97,6 +101,14 @@ fun ActiveCallScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.glow,
+                            Color.Transparent
+                        )
+                    )
+                )
                 .windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
             Column(
@@ -158,26 +170,41 @@ fun ActiveCallScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    val avatarRing = when {
+                        isActive -> MaterialTheme.colorScheme.success
+                        isHold -> MaterialTheme.colorScheme.warning
+                        isEnded -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    }
                     Box(
                         modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .border(2.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                            .size(104.dp)
+                            .border(1.5.dp, avatarRing.copy(alpha = 0.28f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        val emoji = when {
-                            isTestCall -> "🛠️"
-                            isActive -> "📞"
-                            isHold -> "⏸️"
-                            isEnded -> "⏹️"
-                            callInfo.phase == CallPhase.RINGING || callInfo.phase == CallPhase.EARLY_MEDIA -> "🔔"
-                            else -> "📡"
+                        Box(
+                            modifier = Modifier
+                                .size(88.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(2.dp, avatarRing, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    isTestCall -> Icons.Default.GraphicEq
+                                    isActive -> Icons.Default.Lock
+                                    isHold -> Icons.Default.HourglassTop
+                                    isEnded -> Icons.Default.CallEnd
+                                    callInfo.phase == CallPhase.RINGING ||
+                                        callInfo.phase == CallPhase.EARLY_MEDIA -> Icons.Default.GraphicEq
+                                    else -> Icons.Default.Sync
+                                },
+                                contentDescription = null,
+                                tint = avatarRing,
+                                modifier = Modifier.size(36.dp)
+                            )
                         }
-                        Text(
-                            text = emoji,
-                            fontSize = 40.sp
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -265,11 +292,11 @@ fun ActiveCallScreen(
                 if (isActive || isHold) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(
@@ -388,7 +415,9 @@ fun ActiveCallScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(72.dp)
+                            .size(76.dp)
+                            .border(4.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.22f), CircleShape)
+                            .padding(4.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.error)
                             .clickable { onEndCall() }
@@ -418,12 +447,12 @@ fun ActiveCallScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),

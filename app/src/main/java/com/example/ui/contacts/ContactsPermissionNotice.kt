@@ -61,9 +61,9 @@ fun ContactsPermissionNotice(
         modifier = modifier
             .fillMaxWidth()
             .testTag("contacts_permission_notice"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
     ) {
         if (compact) {
             Row(

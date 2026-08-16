@@ -69,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -93,7 +94,12 @@ import com.example.ui.contacts.ContactAvatar
 import com.example.ui.contacts.ContactsPermissionNotice
 import com.example.ui.contacts.ContactsPermissionStatus
 import com.example.ui.contacts.ContactsViewModel
+import com.example.ui.common.SignalSectionLabel
 import com.example.ui.contacts.rememberContactsPermissionState
+import com.example.ui.theme.DialerElevation
+import com.example.ui.theme.glassBorder
+import com.example.ui.theme.glow
+import com.example.ui.theme.isLightScheme
 import com.example.ui.theme.onSuccess
 import com.example.ui.theme.onSuccessContainer
 import com.example.ui.theme.onWarning
@@ -143,7 +149,7 @@ fun DialerScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = Color.Transparent
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Flexible upper area: status, caller ID selector and quick dial.
@@ -328,14 +334,12 @@ private fun DialerContactsSection(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
+            SignalSectionLabel(
                 text = if (isGranted && !isSmartDialing && favorites.isNotEmpty()) {
                     stringResource(R.string.dialer_contacts_favorites)
                 } else {
                     stringResource(R.string.dialer_contacts_title)
-                },
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
             )
             Spacer(modifier = Modifier.weight(1f))
             if (isGranted) {
@@ -420,9 +424,10 @@ private fun ContactMatchRow(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("dialer_contact_match_${contact.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Row(
             modifier = Modifier.padding(start = 10.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
@@ -494,9 +499,10 @@ private fun FavoriteContactCard(
         modifier = Modifier
             .width(80.dp)
             .testTag("dialer_favorite_${contact.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 10.dp),
@@ -528,9 +534,10 @@ private fun BrowseContactsCard(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .testTag("dialer_contacts_browse"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Row(
             modifier = Modifier.padding(14.dp),
@@ -680,9 +687,10 @@ private fun CallerIdSelector(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("dialer_caller_id_chip"),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -876,11 +884,7 @@ private fun QuickDialSection(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(R.string.dialer_recents_title),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            SignalSectionLabel(text = stringResource(R.string.dialer_recents_title))
             Spacer(modifier = Modifier.weight(1f))
             if (recents.isNotEmpty()) {
                 TextButton(
@@ -902,9 +906,10 @@ private fun QuickDialSection(
         if (recents.isEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
             ) {
                 Row(
                     modifier = Modifier.padding(14.dp),
@@ -965,9 +970,10 @@ private fun QuickDialCard(
     Surface(
         onClick = onClick,
         modifier = Modifier.width(140.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        shadowElevation = if (MaterialTheme.colorScheme.isLightScheme) DialerElevation.card else 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.glassBorder)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
@@ -1043,21 +1049,22 @@ private fun NumberDisplay(formattedNumber: String) {
         else -> 22.sp
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 66.dp),
-        contentAlignment = Alignment.Center
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = if (isEmpty) stringResource(R.string.dialer_enter_number) else formattedNumber,
             style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Medium,
-                fontSize = if (isEmpty) 22.sp else fontSize,
-                letterSpacing = 0.8.sp
+                fontWeight = if (isEmpty) FontWeight.Medium else FontWeight.SemiBold,
+                fontSize = if (isEmpty) 20.sp else fontSize,
+                letterSpacing = if (isEmpty) 0.2.sp else 1.2.sp
             ),
             color = if (isEmpty) {
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
             } else {
                 MaterialTheme.colorScheme.onSurface
             },
@@ -1065,6 +1072,20 @@ private fun NumberDisplay(formattedNumber: String) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.testTag("dialer_display_text")
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .width(if (isEmpty) 48.dp else 72.dp)
+                .height(2.dp)
+                .clip(RoundedCornerShape(1.dp))
+                .background(
+                    if (isEmpty) {
+                        MaterialTheme.colorScheme.outlineVariant
+                    } else {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+                    }
+                )
         )
     }
 }
@@ -1159,9 +1180,12 @@ private fun KeypadKey(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.93f else 1f,
+        targetValue = if (isPressed) 0.92f else 1f,
         label = "keypad_key_scale"
     )
+    val colors = MaterialTheme.colorScheme
+    val keyFill = if (isPressed) colors.primaryContainer else colors.surface
+    val keyBorder = if (isPressed) colors.primary.copy(alpha = 0.45f) else colors.glassBorder
 
     Box(
         modifier = Modifier
@@ -1170,9 +1194,15 @@ private fun KeypadKey(
                 scaleX = scale
                 scaleY = scale
             }
+            .shadow(
+                elevation = if (colors.isLightScheme && !isPressed) 3.dp else 0.dp,
+                shape = CircleShape,
+                spotColor = colors.primary.copy(alpha = 0.12f),
+                ambientColor = Color.Black.copy(alpha = 0.06f)
+            )
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            .background(keyFill)
+            .border(1.dp, keyBorder, CircleShape)
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
@@ -1198,7 +1228,8 @@ private fun KeypadKey(
                     text = label,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 27.sp
+                        fontSize = 28.sp,
+                        letterSpacing = 0.4.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -1286,12 +1317,13 @@ private fun CallActionButton(
             .fillMaxWidth()
             .height(58.dp)
             .shadow(
-                elevation = if (isEnabled) 8.dp else 0.dp,
-                shape = RoundedCornerShape(18.dp),
-                spotColor = MaterialTheme.colorScheme.success.copy(alpha = 0.45f)
+                elevation = if (isEnabled) DialerElevation.hero else 0.dp,
+                shape = MaterialTheme.shapes.large,
+                spotColor = MaterialTheme.colorScheme.success.copy(alpha = 0.5f),
+                ambientColor = MaterialTheme.colorScheme.glow
             )
             .testTag("dialer_call_button"),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.large,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.success,
             contentColor = MaterialTheme.colorScheme.onSuccess,

@@ -9,17 +9,16 @@
         <aapt:attr name="android:fillColor">
             <gradient
                 android:angle="315"
-                android:endColor="#1D4ED8"
-                android:startColor="#1E3A8A"
+                android:endColor="#084441"
+                android:startColor="#0C1014"
                 android:type="linear" />
         </aapt:attr>
     </path>
-    <!-- Subtle geometric grid for softphone precision -->
     <path
         android:fillColor="#0AFFFFFF"
         android:pathData="M18,18h72v72h-72z" />
     <path
-        android:strokeColor="#15FFFFFF"
+        android:strokeColor="#153ECFC4"
         android:strokeWidth="1"
         android:pathData="M54,0L54,108 M0,54L108,54" />
 </vector>
