@@ -239,6 +239,8 @@ class SipRegisterService : Service() {
         if (fingerprint == lastRegisterFingerprint &&
             (status == RegistrationStatus.REGISTERED ||
                 status == RegistrationStatus.REGISTERING ||
+                status == RegistrationStatus.AUTHENTICATING ||
+                status == RegistrationStatus.RETRYING ||
                 status == RegistrationStatus.FAILED)
         ) {
             // Engine owns 503/timeout backoff. Do not tear down the account on every profile emit.
@@ -297,7 +299,9 @@ class SipRegisterService : Service() {
         val title = when {
             state.needsPassword -> "SIP Password Required"
             state.status == RegistrationStatus.REGISTERED -> "SIP Connected"
+            state.status == RegistrationStatus.AUTHENTICATING -> "SIP Authenticating (401)..."
             state.status == RegistrationStatus.REGISTERING -> "Registering SIP..."
+            state.status == RegistrationStatus.RETRYING -> "Retrying SIP Connection..."
             state.status == RegistrationStatus.EXPIRED -> "SIP Registration Expired"
             state.status == RegistrationStatus.FAILED -> "SIP Registration Error"
             state.status == RegistrationStatus.UNREGISTERING -> "SIP Disconnecting"
@@ -307,6 +311,9 @@ class SipRegisterService : Service() {
         val content = when {
             state.isRegistered -> "${state.username}@${state.host}"
             state.needsPassword -> "Re-enter SIP password in Settings"
+            state.status == RegistrationStatus.AUTHENTICATING -> "Completing 401 challenge for ${state.username}@${state.host}"
+            state.status == RegistrationStatus.RETRYING && state.retryAfterSeconds > 0 -> "Reconnecting in ${state.retryAfterSeconds}s..."
+            state.status == RegistrationStatus.RETRYING -> "Reconnecting to ${state.host}..."
             else -> state.statusMessage.ifBlank { "Configure SIP credentials in Settings" }
         }
 

@@ -27,15 +27,17 @@ object SipAuthErrorMapper {
         val retryAfter = retryAfterSeconds.takeIf { it > 0 } ?: parseRetryAfter(raw, statusPhrase, warn, reason)
         val inferred = when {
             protocolCode > 0 -> protocolCode
+            looksLike(raw, reason, statusPhrase, "603", "decline", "declined") -> 603
             looksLike(raw, reason, statusPhrase, "503", "service unavailable") -> 503
+            looksLike(raw, reason, statusPhrase, "487", "terminated", "request terminated") -> 487
+            looksLike(raw, reason, statusPhrase, "486", "busy") -> 486
+            looksLike(raw, reason, statusPhrase, "488", "not acceptable") -> 488
+            looksLike(raw, reason, statusPhrase, "480", "temporarily unavailable") -> 480
             looksLike(raw, reason, statusPhrase, "401", "unauthorized", "badcredentials", "bad credentials") -> 401
             looksLike(raw, reason, statusPhrase, "403", "forbidden") -> 403
             looksLike(raw, reason, statusPhrase, "407", "proxy") -> 407
             looksLike(raw, reason, statusPhrase, "408", "timeout", "noresponse", "no response") -> 408
             looksLike(raw, reason, statusPhrase, "404", "not found") -> 404
-            looksLike(raw, reason, statusPhrase, "480") -> 480
-            looksLike(raw, reason, statusPhrase, "486", "busy") -> 486
-            looksLike(raw, reason, statusPhrase, "488") -> 488
             looksLike(raw, reason, statusPhrase, "500", "server") -> 500
             else -> 0
         }
@@ -43,14 +45,16 @@ object SipAuthErrorMapper {
         val message = when (inferred) {
             401 -> "Unauthorized (401): digest authentication failed. Check username, auth username, password, and realm."
             403 -> "Forbidden (403): registrar rejected these credentials."
-            404 -> "Not Found (404): SIP account does not exist on this registrar."
+            404 -> "Not Found (404): SIP account or destination does not exist."
             407 -> "Proxy Authentication Required (407): digest challenge was not completed."
             408 -> "Request Timeout (408): no SIP response on UDP:5060."
             480 -> "Temporarily Unavailable (480)."
             486 -> "Busy Here (486)."
+            487 -> "Request Terminated (487)."
             488 -> "Not Acceptable Here (488)."
             500 -> "SIP server error (500)."
             503 -> format503(statusPhrase.ifBlank { raw }, retryAfter)
+            603 -> "Declined (603): call was declined by recipient."
             else -> when {
                 raw.contains("io error", ignoreCase = true) || reason.contains("IOError", ignoreCase = true) ->
                     "No final SIP response on UDP:5060 (Linphone io error). Often a timeout, 503 Service Unavailable, or the digest retry used the wrong transport."

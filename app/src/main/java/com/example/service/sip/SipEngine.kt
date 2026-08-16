@@ -40,14 +40,21 @@ data class SipTestResult(
 )
 
 interface SipCallEventListener {
+    fun onInitializing(details: String = "Initializing...") {}
+    fun onDialing(details: String = "Dialing...") {}
     fun onConnecting(details: String)
     fun onRegistering(host: String)
     fun onRegistered(username: String)
     fun onRinging(remoteTag: String?)
+    fun onEarlyMedia(details: String = "Early Media (183)") {}
     fun onConnected(audioCodec: String, localRtpPort: Int, remoteRtpPort: Int)
+    fun onStreamsRunning(audioCodec: String, localRtpPort: Int, remoteRtpPort: Int) {}
+    fun onHold(isPausedByRemote: Boolean = false) {}
+    fun onResumed() {}
+    fun onTerminating(reason: String = "Terminating...") {}
     fun onError(errorCode: Int, message: String)
     fun onEnded(reason: String)
-    fun onAudioStatsUpdated(latencyMs: Int, packetsSent: Long, packetsReceived: Long)
+    fun onAudioStatsUpdated(latencyMs: Int, packetsSent: Long, packetsReceived: Long) {}
 }
 
 /**
@@ -148,6 +155,18 @@ class SipEngine private constructor(
     private val coreListener = object : CoreListenerStub() {
         override fun onAuthenticationRequested(core: Core, authInfo: AuthInfo, method: AuthMethod) {
             val config = currentSipConfig
+            val username = authInfo.username ?: config?.username.orEmpty()
+            val host = authInfo.domain ?: config?.host.orEmpty()
+            Log.i(tag, "401/407 Authentication challenge received (${method.name}) for $username@$host (realm=${authInfo.realm ?: "*"})")
+            _registrationState.value = _registrationState.value.copy(
+                status = RegistrationStatus.AUTHENTICATING,
+                username = username.ifBlank { _registrationState.value.username },
+                host = host.ifBlank { _registrationState.value.host },
+                statusCode = 401,
+                statusMessage = "Authenticating with ${host.ifBlank { "server" }} (401 Challenge)...",
+                lastError = null,
+                needsPassword = false
+            )
             if (config == null || !config.hasUsableCredentials()) {
                 Log.w(tag, "401/407 challenge received but SIP password is not configured")
                 return
@@ -163,24 +182,75 @@ class SipEngine private constructor(
             state: Call.State,
             message: String
         ) {
-            Log.i(tag, "Call state changed: $state - $message")
+            Log.i(tag, "Call state changed: $state - $message (dir=${call.dir})")
             when (state) {
-                Call.State.OutgoingProgress -> listener?.onConnecting(message)
-                Call.State.OutgoingRinging -> listener?.onRinging(null)
+                Call.State.OutgoingInit -> {
+                    listener?.onInitializing("Initializing call...")
+                }
+                Call.State.OutgoingProgress -> {
+                    listener?.onDialing("Connecting to carrier (100 Trying)...")
+                    listener?.onConnecting(message.ifBlank { "Dialing destination..." })
+                }
+                Call.State.OutgoingRinging -> {
+                    listener?.onRinging(call.remoteAddress?.asStringUriOnly())
+                }
+                Call.State.OutgoingEarlyMedia -> {
+                    listener?.onEarlyMedia("Session Progress (183 Early Media)...")
+                }
                 Call.State.Connected -> {
                     val codec = call.currentParams?.usedAudioPayloadType?.mimeType ?: "Unknown"
                     listener?.onConnected(codec, 0, 0)
+                }
+                Call.State.StreamsRunning -> {
+                    val codec = call.currentParams?.usedAudioPayloadType?.mimeType ?: "Unknown"
+                    val localPort = call.currentParams?.usedAudioPayloadType?.channels ?: 0
+                    listener?.onStreamsRunning(codec, localPort, 0)
+                    listener?.onConnected(codec, localPort, 0)
+                }
+                Call.State.Pausing, Call.State.Paused -> {
+                    listener?.onHold(false)
+                }
+                Call.State.PausedByRemote -> {
+                    listener?.onHold(true)
+                }
+                Call.State.Resuming -> {
+                    listener?.onResumed()
                 }
                 Call.State.Error -> {
                     val info = call.errorInfo
                     val mapped = SipAuthErrorMapper.map(
                         protocolCode = info?.protocolCode ?: 0,
                         linphoneMessage = message,
-                        reasonName = info?.reason?.name.orEmpty()
+                        reasonName = info?.reason?.name.orEmpty(),
+                        phrase = info?.phrase.orEmpty(),
+                        warnings = info?.warnings.orEmpty()
                     )
                     listener?.onError(mapped.statusCode.takeIf { it > 0 } ?: 500, mapped.message)
                 }
-                Call.State.End, Call.State.Released -> listener?.onEnded(message)
+                Call.State.End -> {
+                    val info = call.errorInfo
+                    val protoCode = info?.protocolCode ?: 0
+                    val phrase = info?.phrase.orEmpty()
+                    val reasonName = info?.reason?.name.orEmpty()
+                    val reasonDesc = when {
+                        protoCode == 486 || reasonName.contains("Busy", ignoreCase = true) -> "Busy Here (486)"
+                        protoCode == 603 || reasonName.contains("Decline", ignoreCase = true) -> "Call Declined (603)"
+                        protoCode == 404 || reasonName.contains("NotFound", ignoreCase = true) -> "Number Not Found (404)"
+                        protoCode == 408 || reasonName.contains("Timeout", ignoreCase = true) -> "Request Timeout (408)"
+                        protoCode == 480 || reasonName.contains("TemporarilyUnavailable", ignoreCase = true) -> "Temporarily Unavailable (480)"
+                        protoCode == 488 || reasonName.contains("NotAcceptable", ignoreCase = true) -> "Media / Codec Not Acceptable (488)"
+                        protoCode == 503 -> "Service Unavailable (503)"
+                        phrase.isNotBlank() && !phrase.equals("OK", ignoreCase = true) -> phrase
+                        message.isNotBlank() && !message.equals("Call terminated", ignoreCase = true) -> message
+                        else -> "Call ended"
+                    }
+                    listener?.onTerminating(reasonDesc)
+                    listener?.onEnded(reasonDesc)
+                }
+                Call.State.Released -> {
+                    currentCall = null
+                    listener?.onEnded("Call Released")
+                }
                 else -> {}
             }
         }
@@ -224,7 +294,7 @@ class SipEngine private constructor(
                         host = host,
                         port = currentSipConfig?.port ?: 5060,
                         statusCode = 200,
-                        statusMessage = "Registered with $host",
+                        statusMessage = "Registered with $host (200 OK)",
                         lastError = null,
                         retryCount = 0,
                         retryAfterSeconds = 0,
@@ -253,7 +323,8 @@ class SipEngine private constructor(
                             "reason=${info?.reason?.name} warnings=${info?.warnings} msg=$message " +
                             "server=$server transport=$transport contact=$contact retryAfter=${mapped.retryAfterSeconds}"
                     )
-                    val alreadyFailed = _registrationState.value.status == RegistrationStatus.FAILED
+                    val alreadyFailed = _registrationState.value.status == RegistrationStatus.FAILED ||
+                        _registrationState.value.status == RegistrationStatus.RETRYING
                     if (!alreadyFailed) {
                         failCount += 1
                     }
@@ -279,6 +350,7 @@ class SipEngine private constructor(
                 }
                 RegistrationState.Cleared, RegistrationState.None -> {
                     if (_registrationState.value.status != RegistrationStatus.FAILED &&
+                        _registrationState.value.status != RegistrationStatus.RETRYING &&
                         !_registrationState.value.needsPassword
                     ) {
                         _registrationState.value = _registrationState.value.copy(
@@ -342,12 +414,14 @@ class SipEngine private constructor(
         val fingerprint = sipConfig.registrationFingerprint()
         val status = _registrationState.value.status
         if (!force && fingerprint == lastRegisterFingerprint &&
-            (status == RegistrationStatus.REGISTERED || status == RegistrationStatus.REGISTERING)
+            (status == RegistrationStatus.REGISTERED ||
+                status == RegistrationStatus.REGISTERING ||
+                status == RegistrationStatus.AUTHENTICATING)
         ) {
             return
         }
         if (!force && fingerprint == lastRegisterFingerprint &&
-            status == RegistrationStatus.FAILED &&
+            (status == RegistrationStatus.FAILED || status == RegistrationStatus.RETRYING) &&
             System.currentTimeMillis() < nextRetryAtMs
         ) {
             Log.d(tag, "Skipping REGISTER; backoff until ${nextRetryAtMs - System.currentTimeMillis()}ms")
@@ -383,7 +457,9 @@ class SipEngine private constructor(
             )
             return
         }
-        if (_registrationState.value.status == RegistrationStatus.REGISTERING) {
+        if (_registrationState.value.status == RegistrationStatus.REGISTERING ||
+            _registrationState.value.status == RegistrationStatus.AUTHENTICATING
+        ) {
             return
         }
         if (!force && System.currentTimeMillis() < nextRetryAtMs) {
@@ -416,6 +492,10 @@ class SipEngine private constructor(
         nextRetryAtMs = 0L
         failCount = 0
         try {
+            _registrationState.value = _registrationState.value.copy(
+                status = RegistrationStatus.UNREGISTERING,
+                statusMessage = "Unregistering..."
+            )
             replacingAccount = true
             core?.clearAccounts()
             core?.clearProxyConfig()
@@ -703,6 +783,7 @@ class SipEngine private constructor(
             coreStarted = true
             if (iterateJob == null) {
                 iterateJob = engineScope.launch {
+                    var lastStatsCheck = 0L
                     while (isActive) {
                         val c = core
                         if (c != null && coreStarted) {
@@ -710,6 +791,24 @@ class SipEngine private constructor(
                                 c.iterate()
                             } catch (e: Exception) {
                                 Log.e(tag, "Core.iterate failed", e)
+                            }
+                        }
+                        val call = currentCall
+                        val now = System.currentTimeMillis()
+                        if (call != null && now - lastStatsCheck >= 1000L) {
+                            lastStatsCheck = now
+                            try {
+                                val state = call.state
+                                if (state == Call.State.StreamsRunning || state == Call.State.Connected) {
+                                    val stats = call.audioStats
+                                    val latency = (call.currentParams?.roundTripDelay ?: 0.022f * 1000f).toInt().coerceAtLeast(10)
+                                    val sent = stats?.numberPacketsSent ?: 0L
+                                    val recv = stats?.numberPacketsReceived ?: 0L
+                                    if (sent > 0L || recv > 0L) {
+                                        listener?.onAudioStatsUpdated(latency, sent, recv)
+                                    }
+                                }
+                            } catch (_: Exception) {
                             }
                         }
                         delay(20)
@@ -874,9 +973,23 @@ class SipEngine private constructor(
         }
         nextRetryAtMs = System.currentTimeMillis() + backoffSec * 1000L
         Log.i(tag, "Scheduling REGISTER retry in ${backoffSec}s (status=$statusCode failCount=$failCount)")
+        _registrationState.value = _registrationState.value.copy(
+            status = RegistrationStatus.RETRYING,
+            retryCount = failCount,
+            retryAfterSeconds = backoffSec.toInt(),
+            statusMessage = "Retrying in ${backoffSec}s..."
+        )
         retryJob = engineScope.launch {
-            delay(backoffSec * 1000L)
-            if (currentSipConfig?.registrationFingerprint() == sipConfig.registrationFingerprint()) {
+            for (sec in backoffSec downTo 1) {
+                if (!isActive) break
+                _registrationState.value = _registrationState.value.copy(
+                    status = RegistrationStatus.RETRYING,
+                    retryAfterSeconds = sec.toInt(),
+                    statusMessage = "Retrying in ${sec}s..."
+                )
+                delay(1000L)
+            }
+            if (isActive && currentSipConfig?.registrationFingerprint() == sipConfig.registrationFingerprint()) {
                 refreshNow(force = true)
             }
         }

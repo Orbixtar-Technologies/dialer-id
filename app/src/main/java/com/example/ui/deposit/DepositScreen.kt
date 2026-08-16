@@ -1,5 +1,6 @@
 package com.example.ui.deposit
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,25 +36,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.BuildConfig
-import com.example.ui.theme.Emerald50
-import com.example.ui.theme.Emerald600
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.RoyalBlue50
-import com.example.ui.theme.RoyalBlue600
-import com.example.ui.theme.Slate100
-import com.example.ui.theme.Slate200
-import com.example.ui.theme.Slate50
-import com.example.ui.theme.Slate500
-import com.example.ui.theme.Slate700
-import com.example.ui.theme.Slate800
-import com.example.ui.theme.Slate900
+import com.example.ui.common.formatBalance
+import com.example.ui.theme.onSuccessContainer
+import com.example.ui.theme.successContainer
+import java.util.Locale
 
 @Composable
 fun DepositScreen(
@@ -62,10 +55,11 @@ fun DepositScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
+    val hasCredit = userProfile.creditBalance > 0.0
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = Slate50
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
@@ -77,12 +71,12 @@ fun DepositScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(20.dp), spotColor = RoyalBlue600.copy(alpha = 0.15f))
-                    .border(1.dp, Slate200, RoundedCornerShape(20.dp)),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = PureWhite)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(
                     modifier = Modifier
@@ -94,50 +88,72 @@ fun DepositScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(RoyalBlue50),
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AccountBalanceWallet,
-                                    contentDescription = "Wallet",
-                                    tint = RoyalBlue600,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Available Calling Credit",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Slate500
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = "$${if (userProfile.creditBalance * 100 == (userProfile.creditBalance * 100).toLong().toDouble()) String.format("%.2f", userProfile.creditBalance) else String.format("%.4f", userProfile.creditBalance)} ${userProfile.currency}",
-                                    style = MaterialTheme.typography.headlineMedium.copy(
+                                    text = "$${formatBalance(userProfile.creditBalance)} ${userProfile.currency}",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
                                         fontWeight = FontWeight.ExtraBold,
                                         fontFamily = FontFamily.Monospace
                                     ),
-                                    color = if (userProfile.creditBalance > 0.0) Emerald600 else Slate900
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
 
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (userProfile.creditBalance > 0.0) Emerald50 else Slate100)
+                                .background(
+                                    if (hasCredit) {
+                                        MaterialTheme.colorScheme.successContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    }
+                                )
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = if (userProfile.creditBalance > 0.0) "ACTIVE" else "ZERO BALANCE",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = if (userProfile.creditBalance > 0.0) Emerald600 else Slate500,
-                                fontSize = 10.sp
+                                text = if (hasCredit) "ACTIVE" else "ZERO BALANCE",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                ),
+                                color = if (hasCredit) {
+                                    MaterialTheme.colorScheme.onSuccessContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                maxLines = 1
                             )
                         }
                     }
@@ -147,11 +163,12 @@ fun DepositScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Slate200, RoundedCornerShape(16.dp)),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = PureWhite)
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(
                     modifier = Modifier
@@ -162,21 +179,23 @@ fun DepositScreen(
                         Icon(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
-                            tint = RoyalBlue600,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "In-app deposits unavailable",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Slate900
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = "Credit is managed by the billing server. This app cannot add funds, show deposit addresses, or simulate payments. Ask your administrator to credit the account.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Slate700
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -186,7 +205,7 @@ fun DepositScreen(
                 Text(
                     text = "Debug credit simulator",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Slate900,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -195,23 +214,45 @@ fun DepositScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    quickAmounts.forEach { amt ->
-                        val isSelected = uiState.selectedAmount == amt && uiState.customAmountInput.isEmpty()
+                    quickAmounts.forEach { amount ->
+                        val isSelected = uiState.selectedAmount == amount &&
+                            uiState.customAmountInput.isEmpty()
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(48.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) RoyalBlue600 else PureWhite)
-                                .border(1.dp, if (isSelected) RoyalBlue600 else Slate200, RoundedCornerShape(12.dp))
-                                .clickable { viewModel.selectAmount(amt) }
-                                .testTag("deposit_amount_${amt.toInt()}"),
+                                .background(
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    }
+                                )
+                                .border(
+                                    1.dp,
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.outlineVariant
+                                    },
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable { viewModel.selectAmount(amount) }
+                                .testTag("deposit_amount_${amount.toInt()}"),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "$${amt.toInt()}",
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                color = if (isSelected) PureWhite else Slate800
+                                text = "$${amount.toInt()}",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                                maxLines = 1
                             )
                         }
                     }
@@ -225,18 +266,21 @@ fun DepositScreen(
                         .testTag("simulate_topup_button"),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = RoyalBlue600,
-                        contentColor = PureWhite
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(
-                        text = "Debug add $${String.format("%.2f", uiState.selectedAmount)}",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                        text = "Debug add $${String.format(Locale.US, "%.2f", uiState.selectedAmount)}",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        maxLines = 1
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(88.dp))
         }
     }
 }

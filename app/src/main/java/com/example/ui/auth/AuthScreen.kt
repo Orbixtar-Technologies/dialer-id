@@ -4,21 +4,24 @@ import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,63 +29,56 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.Emerald500
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.Rose500
-import com.example.ui.theme.RoyalBlue50
-import com.example.ui.theme.RoyalBlue600
-import com.example.ui.theme.RoyalBlue800
-import com.example.ui.theme.Slate100
-import com.example.ui.theme.Slate200
-import com.example.ui.theme.Slate400
-import com.example.ui.theme.Slate50
-import com.example.ui.theme.Slate500
-import com.example.ui.theme.Slate700
-import com.example.ui.theme.Slate900
+import com.example.R
+import com.example.ui.common.AppFormError
+import com.example.ui.common.AppTextField
 
 @Composable
 fun GoogleLogoIcon(modifier: Modifier = Modifier) {
@@ -156,12 +152,26 @@ fun AuthScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = context as? Activity
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var isPasswordVisible by remember { mutableStateOf(false) }
 
+    val submit = {
+        keyboardController?.hide()
+        focusManager.clearFocus()
+        viewModel.submitEmailAuth()
+    }
+
+    // This screen is drawn outside the app Scaffold, so it owns its own insets:
+    // safeDrawing covers the status/navigation bars and the IME, which together
+    // with the scrolling column keeps the submit button reachable above an open
+    // keyboard on short screens.
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Slate50)
-            .padding(20.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = 20.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -173,19 +183,17 @@ fun AuthScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Brand Logo & Badge
             Box(
                 modifier = Modifier
                     .size(72.dp)
-                    .shadow(8.dp, CircleShape, spotColor = RoyalBlue600.copy(alpha = 0.3f))
                     .clip(CircleShape)
-                    .background(RoyalBlue600),
+                    .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Phone,
-                    contentDescription = "DialerID Phone",
-                    tint = PureWhite,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(36.dp)
                 )
             }
@@ -193,12 +201,12 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "DialerID",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.5).sp
                 ),
-                color = Slate900
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Row(
@@ -206,88 +214,38 @@ fun AuthScreen(
                 modifier = Modifier
                     .padding(top = 4.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(RoyalBlue50)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(Emerald500)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Account • Cloud Synced",
+                    text = stringResource(R.string.auth_secure_session),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = RoyalBlue800
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Main Auth Card
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Slate200, RoundedCornerShape(20.dp))
-                    .shadow(4.dp, RoundedCornerShape(20.dp), spotColor = Color(0x10000000)),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = PureWhite)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(22.dp)
                 ) {
-                    // Auth Mode Selector (Sign In vs Create Account)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Slate100)
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (!uiState.isSignUpMode) PureWhite else Color.Transparent)
-                                .clickable { if (uiState.isSignUpMode) viewModel.toggleAuthMode() }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Sign In",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = if (!uiState.isSignUpMode) FontWeight.Bold else FontWeight.Medium
-                                ),
-                                color = if (!uiState.isSignUpMode) Slate900 else Slate500
-                            )
+                    AuthModeSelector(
+                        isSignUpMode = uiState.isSignUpMode,
+                        onSelect = { signUp ->
+                            if (signUp != uiState.isSignUpMode) viewModel.toggleAuthMode()
                         }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (uiState.isSignUpMode) PureWhite else Color.Transparent)
-                                .clickable { if (!uiState.isSignUpMode) viewModel.toggleAuthMode() }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Create Account",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = if (uiState.isSignUpMode) FontWeight.Bold else FontWeight.Medium
-                                ),
-                                color = if (uiState.isSignUpMode) Slate900 else Slate500
-                            )
-                        }
-                    }
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Primary Google Sign-In with Credential Manager
                     OutlinedButton(
                         onClick = {
                             if (activity != null) {
@@ -300,174 +258,177 @@ fun AuthScreen(
                             .testTag("auth_google_button"),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = PureWhite,
-                            contentColor = Slate900
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
-                            brush = androidx.compose.ui.graphics.SolidColor(Slate200)
-                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         enabled = !uiState.isLoading
                     ) {
                         GoogleLogoIcon(modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Continue with Google",
+                            text = stringResource(R.string.auth_continue_with_google),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
-                            )
+                            ),
+                            maxLines = 1
                         )
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // Divider with text
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Slate200)
-                        Text(
-                            text = "  or with email  ",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Slate400
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.outlineVariant
                         )
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Slate200)
+                        Text(
+                            text = stringResource(R.string.auth_divider_email),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 10.dp)
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // Display Name (if Sign Up mode)
                     AnimatedVisibility(
                         visible = uiState.isSignUpMode,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
                         Column {
-                            OutlinedTextField(
+                            AppTextField(
                                 value = uiState.displayNameInput,
                                 onValueChange = viewModel::onDisplayNameChanged,
-                                label = { Text("Full Name / Operator Handle") },
-                                placeholder = { Text("e.g. Alex Rivera") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Person, contentDescription = "Name", tint = Slate500)
-                                },
-                                singleLine = true,
+                                label = stringResource(R.string.auth_name_label),
+                                placeholder = stringResource(R.string.auth_name_placeholder),
+                                leadingIcon = Icons.Default.Person,
+                                enabled = !uiState.isLoading,
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = KeyboardType.Text,
                                     imeAction = ImeAction.Next
                                 ),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .testTag("auth_name_input"),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = RoyalBlue600,
-                                    unfocusedBorderColor = Slate200,
-                                    focusedContainerColor = PureWhite,
-                                    unfocusedContainerColor = Slate50
-                                )
+                                    .testTag("auth_name_input")
                             )
                             Spacer(modifier = Modifier.height(14.dp))
                         }
                     }
 
-                    // Email Field
-                    OutlinedTextField(
+                    AppTextField(
                         value = uiState.emailInput,
                         onValueChange = viewModel::onEmailChanged,
-                        label = { Text("Operator Email") },
-                        placeholder = { Text("operator@example.com") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = "Email", tint = Slate500)
-                        },
-                        singleLine = true,
+                        label = stringResource(R.string.auth_email_label),
+                        placeholder = stringResource(R.string.auth_email_placeholder),
+                        leadingIcon = Icons.Default.Email,
+                        enabled = !uiState.isLoading,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
                             imeAction = ImeAction.Next
                         ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("auth_email_input"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = RoyalBlue600,
-                            unfocusedBorderColor = Slate200,
-                            focusedContainerColor = PureWhite,
-                            unfocusedContainerColor = Slate50
-                        )
+                            .testTag("auth_email_input")
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Password Field
-                    OutlinedTextField(
+                    AppTextField(
                         value = uiState.passwordInput,
                         onValueChange = viewModel::onPasswordChanged,
-                        label = { Text("Security Key / Password") },
-                        placeholder = { Text("••••••••") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = "Password", tint = Slate500)
+                        label = stringResource(R.string.auth_password_label),
+                        placeholder = stringResource(R.string.auth_password_placeholder),
+                        leadingIcon = Icons.Default.Lock,
+                        enabled = !uiState.isLoading,
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = stringResource(
+                                        if (isPasswordVisible) {
+                                            R.string.auth_password_hide
+                                        } else {
+                                            R.string.auth_password_show
+                                        }
+                                    )
+                                )
+                            }
                         },
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
+                        visualTransformation = if (isPasswordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                viewModel.submitEmailAuth()
-                            }
-                        ),
+                        keyboardActions = KeyboardActions(onDone = { submit() }),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("auth_password_input"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = RoyalBlue600,
-                            unfocusedBorderColor = Slate200,
-                            focusedContainerColor = PureWhite,
-                            unfocusedContainerColor = Slate50
-                        )
+                            .testTag("auth_password_input")
                     )
 
-                    if (uiState.errorMessage != null) {
+                    uiState.errorMessage?.let { message ->
                         Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = uiState.errorMessage ?: "",
-                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                            color = Rose500
+                        AppFormError(
+                            message = message,
+                            modifier = Modifier.testTag("auth_error_text")
                         )
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Main Submit Button
                     Button(
-                        onClick = {
-                            viewModel.submitEmailAuth()
-                        },
+                        onClick = { submit() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
+                            .height(52.dp)
                             .testTag("auth_login_button"),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = RoyalBlue600,
-                            contentColor = PureWhite
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         enabled = !uiState.isLoading
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-                                color = PureWhite,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 strokeWidth = 2.dp
                             )
                         } else {
                             Text(
-                                text = if (uiState.isSignUpMode) "Create Account" else "Sign In",
+                                text = stringResource(
+                                    if (uiState.isSignUpMode) {
+                                        R.string.auth_create_account
+                                    } else {
+                                        R.string.auth_sign_in
+                                    }
+                                ),
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                             )
                         }
@@ -475,7 +436,6 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Instant Guest Operator Button
                     OutlinedButton(
                         onClick = {
                             viewModel.loginAsGuest()
@@ -487,21 +447,23 @@ fun AuthScreen(
                             .testTag("auth_guest_button"),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Slate100,
-                            contentColor = Slate900
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
-                        border = null
+                        border = null,
+                        enabled = !uiState.isLoading
                     ) {
                         Icon(
                             imageVector = Icons.Default.Security,
-                            contentDescription = "Guest",
-                            tint = RoyalBlue600,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Instant Guest Access",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                            text = stringResource(R.string.auth_guest_access),
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                            maxLines = 1
                         )
                     }
                 }
@@ -509,27 +471,80 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Encryption Notice & Real-time Cloud Sync info
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CloudDone,
-                    contentDescription = "Cloud Synced",
-                    tint = RoyalBlue600,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Firebase Auth & Realtime Database Balance Sync Active",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Slate500,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = stringResource(R.string.auth_footer_note),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun AuthModeSelector(
+    isSignUpMode: Boolean,
+    onSelect: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        AuthModeTab(
+            label = stringResource(R.string.auth_sign_in),
+            isSelected = !isSignUpMode,
+            onClick = { onSelect(false) },
+            modifier = Modifier.weight(1f)
+        )
+        AuthModeTab(
+            label = stringResource(R.string.auth_create_account),
+            isSelected = isSignUpMode,
+            onClick = { onSelect(true) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun AuthModeTab(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.height(44.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = if (isSelected) {
+            MaterialTheme.colorScheme.surface
+        } else {
+            Color.Transparent
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                ),
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                maxLines = 1
+            )
         }
     }
 }

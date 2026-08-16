@@ -15,9 +15,16 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
 import com.example.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class VoipCallService : Service() {
 
+    private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
+    private var callStateJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var audioManager: AudioManager? = null
 
@@ -44,6 +51,14 @@ class VoipCallService : Service() {
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DialerID:VoipCallWakeLock").apply {
             setReferenceCounted(false)
         }
+
+        callStateJob = serviceScope.launch {
+            CallManager.getInstance(this@VoipCallService).callState.collectLatest { info ->
+                if (info.phase != CallPhase.IDLE) {
+                    updateNotification(info)
+                }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -60,7 +75,10 @@ class VoipCallService : Service() {
                     // Audio mode
                 }
 
-                val notification = buildCallNotification(destination, callerId)
+                val currentCall = CallManager.getInstance(this).callState.value
+                val notification = buildCallNotification(currentCall.takeIf { it.destinationNumber.isNotBlank() }
+                    ?: ActiveCallInfo(destinationNumber = destination, callerIdUsed = callerId, phase = CallPhase.INITIALIZING))
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     startForeground(
                         NOTIFICATION_ID,
@@ -88,7 +106,13 @@ class VoipCallService : Service() {
         return START_NOT_STICKY
     }
 
+    private fun updateNotification(info: ActiveCallInfo) {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, buildCallNotification(info))
+    }
+
     private fun teardownAndStop() {
+        callStateJob?.cancel()
         try {
             audioManager?.mode = AudioManager.MODE_NORMAL
         } catch (e: Exception) {
@@ -118,7 +142,7 @@ class VoipCallService : Service() {
         }
     }
 
-    private fun buildCallNotification(destination: String, callerId: String): Notification {
+    private fun buildCallNotification(info: ActiveCallInfo): Notification {
         val contentIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -133,12 +157,34 @@ class VoipCallService : Service() {
             this, 1, endCallIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val title = when (info.phase) {
+            CallPhase.INITIALIZING -> "Initializing Line • ${info.destinationNumber}"
+            CallPhase.DIALING -> "Dialing • ${info.destinationNumber}"
+            CallPhase.CONNECTING -> "Connecting (100 Trying) • ${info.destinationNumber}"
+            CallPhase.RINGING -> "Ringing Destination (180) • ${info.destinationNumber}"
+            CallPhase.EARLY_MEDIA -> "Session Progress (183) • ${info.destinationNumber}"
+            CallPhase.CONNECTED -> "Connecting Audio • ${info.destinationNumber}"
+            CallPhase.ACTIVE -> "Active Call (${info.formattedDuration}) • ${info.destinationNumber}"
+            CallPhase.ON_HOLD -> "Call On Hold • ${info.destinationNumber}"
+            CallPhase.ENDING -> "Ending Call • ${info.destinationNumber}"
+            CallPhase.ENDED -> "Call Ended • ${info.destinationNumber}"
+            CallPhase.IDLE -> "DialerID Call"
+        }
+
+        val content = when (info.phase) {
+            CallPhase.ACTIVE -> "${info.audioCodec} • Transmitting as: ${info.callerIdUsed}"
+            CallPhase.RINGING, CallPhase.EARLY_MEDIA -> "Destination ringing • Caller ID: ${info.callerIdUsed}"
+            CallPhase.ON_HOLD -> "Call is paused on hold"
+            CallPhase.ENDED -> info.endReason
+            else -> if (info.statusMessage.isNotBlank()) info.statusMessage else "Connecting line via ${info.sipHost}..."
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Active Call • $destination")
-            .setContentText("Transmitting as: $callerId")
+            .setContentTitle(title)
+            .setContentText(content)
             .setContentIntent(contentPendingIntent)
-            .setOngoing(true)
+            .setOngoing(info.isCallActive)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .addAction(
@@ -150,6 +196,7 @@ class VoipCallService : Service() {
     }
 
     override fun onDestroy() {
+        callStateJob?.cancel()
         if (wakeLock?.isHeld == true) {
             wakeLock?.release()
         }

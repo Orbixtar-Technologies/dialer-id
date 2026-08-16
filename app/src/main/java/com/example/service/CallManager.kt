@@ -95,7 +95,7 @@ class CallManager private constructor(private val context: Context) : SipCallEve
             destinationNumber = sanitized,
             callerIdUsed = selectedOutboundId,
             countryName = countryName,
-            phase = CallPhase.CONNECTING,
+            phase = CallPhase.INITIALIZING,
             durationSeconds = 0,
             isMuted = false,
             isSpeakerOn = false,
@@ -106,7 +106,8 @@ class CallManager private constructor(private val context: Context) : SipCallEve
             audioCodec = initialCodecName,
             latencyMs = 20,
             packetsSent = 0L,
-            packetsReceived = 0L
+            packetsReceived = 0L,
+            statusMessage = "Initializing Call..."
         )
 
         startVoipService()
@@ -123,12 +124,36 @@ class CallManager private constructor(private val context: Context) : SipCallEve
         return true
     }
 
+    override fun onInitializing(details: String) {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase != CallPhase.ENDED) {
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.INITIALIZING,
+                    statusMessage = details
+                )
+            }
+        }
+    }
+
+    override fun onDialing(details: String) {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase != CallPhase.ENDED && _callState.value.phase != CallPhase.ACTIVE) {
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.DIALING,
+                    statusMessage = details
+                )
+            }
+        }
+    }
+
     override fun onConnecting(details: String) {
         scope.launch(Dispatchers.Main) {
-            _callState.value = _callState.value.copy(
-                phase = CallPhase.CONNECTING,
-                endReason = details
-            )
+            if (_callState.value.phase != CallPhase.ENDED && _callState.value.phase != CallPhase.ACTIVE) {
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.CONNECTING,
+                    statusMessage = details
+                )
+            }
         }
     }
 
@@ -147,8 +172,22 @@ class CallManager private constructor(private val context: Context) : SipCallEve
     override fun onRinging(remoteTag: String?) {
         scope.launch(Dispatchers.Main) {
             if (_callState.value.phase != CallPhase.ACTIVE && _callState.value.phase != CallPhase.ENDED) {
-                _callState.value = _callState.value.copy(phase = CallPhase.RINGING)
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.RINGING,
+                    statusMessage = "Ringing Destination (180 Ringing)..."
+                )
                 playTone(ToneGenerator.TONE_SUP_RINGTONE, 800)
+            }
+        }
+    }
+
+    override fun onEarlyMedia(details: String) {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase != CallPhase.ACTIVE && _callState.value.phase != CallPhase.ENDED) {
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.EARLY_MEDIA,
+                    statusMessage = details
+                )
             }
         }
     }
@@ -157,13 +196,29 @@ class CallManager private constructor(private val context: Context) : SipCallEve
         scope.launch(Dispatchers.Main) {
             if (_callState.value.phase == CallPhase.ENDED) return@launch
 
+            _callState.value = _callState.value.copy(
+                phase = CallPhase.CONNECTED,
+                audioCodec = audioCodec,
+                isEncrypted = sipEngine.isCurrentCallEncrypted(),
+                statusMessage = "Connecting Audio Streams..."
+            )
+        }
+    }
+
+    override fun onStreamsRunning(audioCodec: String, localRtpPort: Int, remoteRtpPort: Int) {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase == CallPhase.ENDED) return@launch
+
             vibrate(120)
+            val isEncrypted = sipEngine.isCurrentCallEncrypted()
             _callState.value = _callState.value.copy(
                 phase = CallPhase.ACTIVE,
                 audioCodec = audioCodec,
-                isEncrypted = sipEngine.isCurrentCallEncrypted()
+                isEncrypted = isEncrypted,
+                statusMessage = if (isEncrypted) "Secured Line Connected (SRTP)" else "HD Line Connected"
             )
 
+            // Accurate duration timer: starts strictly when RTP streams are active
             timerJob?.cancel()
             timerJob = launch {
                 while (isActive && _callState.value.phase == CallPhase.ACTIVE) {
@@ -175,9 +230,45 @@ class CallManager private constructor(private val context: Context) : SipCallEve
         }
     }
 
+    override fun onHold(isPausedByRemote: Boolean) {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase != CallPhase.ENDED) {
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.ON_HOLD,
+                    isOnHold = true,
+                    statusMessage = if (isPausedByRemote) "Call Paused by Remote Party" else "Call On Hold"
+                )
+            }
+        }
+    }
+
+    override fun onResumed() {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase != CallPhase.ENDED) {
+                val isEncrypted = sipEngine.isCurrentCallEncrypted()
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.ACTIVE,
+                    isOnHold = false,
+                    statusMessage = if (isEncrypted) "Secured Line Connected (SRTP)" else "HD Line Connected"
+                )
+            }
+        }
+    }
+
+    override fun onTerminating(reason: String) {
+        scope.launch(Dispatchers.Main) {
+            if (_callState.value.phase != CallPhase.ENDED) {
+                _callState.value = _callState.value.copy(
+                    phase = CallPhase.ENDING,
+                    statusMessage = reason
+                )
+            }
+        }
+    }
+
     override fun onAudioStatsUpdated(latencyMs: Int, packetsSent: Long, packetsReceived: Long) {
         scope.launch(Dispatchers.Main) {
-            if (_callState.value.phase == CallPhase.ACTIVE) {
+            if (_callState.value.phase == CallPhase.ACTIVE || _callState.value.phase == CallPhase.CONNECTED) {
                 _callState.value = _callState.value.copy(
                     latencyMs = latencyMs,
                     packetsSent = packetsSent,
@@ -190,17 +281,17 @@ class CallManager private constructor(private val context: Context) : SipCallEve
     override fun onError(errorCode: Int, message: String) {
         scope.launch(Dispatchers.Main) {
             Log.e("CallManager", "SIP Error received: $errorCode -> $message")
-            endCall(reason = message)
+            endCall(reason = message, statusCode = errorCode)
         }
     }
 
     override fun onEnded(reason: String) {
         scope.launch(Dispatchers.Main) {
-            endCall(reason.ifBlank { "Remote party ended the call" })
+            endCall(reason = reason.ifBlank { "Call Ended" })
         }
     }
 
-    fun endCall(reason: String = "Call Ended") {
+    fun endCall(reason: String = "Call Ended", statusCode: Int = 0) {
         val current = _callState.value
         if (!endingCall.compareAndSet(false, true)) {
             return
@@ -223,9 +314,13 @@ class CallManager private constructor(private val context: Context) : SipCallEve
         playTone(ToneGenerator.TONE_SUP_BUSY, 300)
         vibrate(150)
 
+        val cleanReason = formatEndReason(reason, statusCode)
+
         _callState.value = current.copy(
             phase = CallPhase.ENDED,
-            endReason = reason
+            endReason = cleanReason,
+            statusMessage = cleanReason,
+            sipResponseCode = statusCode
         )
 
         stopVoipService()
@@ -242,9 +337,23 @@ class CallManager private constructor(private val context: Context) : SipCallEve
         }
 
         scope.launch {
-            delay(1800)
+            delay(2000)
             _callState.value = ActiveCallInfo()
             endingCall.set(false)
+        }
+    }
+
+    private fun formatEndReason(reason: String, statusCode: Int): String {
+        return when {
+            statusCode == 486 || reason.contains("busy", ignoreCase = true) -> "Busy Here (486)"
+            statusCode == 603 || reason.contains("decline", ignoreCase = true) -> "Call Declined (603)"
+            statusCode == 404 || reason.contains("not found", ignoreCase = true) -> "Number Not Found (404)"
+            statusCode == 408 || reason.contains("timeout", ignoreCase = true) -> "Request Timeout (408)"
+            statusCode == 480 || reason.contains("temporarily unavailable", ignoreCase = true) -> "Temporarily Unavailable (480)"
+            statusCode == 488 || reason.contains("not acceptable", ignoreCase = true) -> "Media Not Acceptable (488)"
+            statusCode == 503 || reason.contains("service unavailable", ignoreCase = true) -> "Service Unavailable (503)"
+            reason.isNotBlank() && !reason.equals("Call terminated", ignoreCase = true) -> reason
+            else -> "Call Ended"
         }
     }
 

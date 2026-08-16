@@ -301,4 +301,52 @@ class SipRegistrationTest {
         assertTrue(state.needsPassword)
     }
 
+    @Test
+    fun authenticatingAndRetryingStatesFormatCorrectly() {
+        val authState = SipRegistrationState(
+            status = RegistrationStatus.AUTHENTICATING,
+            host = "sip.example.test",
+            username = "operator"
+        )
+        assertFalse(authState.isRegistered)
+        assertEquals("Authenticating (401 Challenge)...", authState.formattedStatus)
+
+        val retryState = SipRegistrationState(
+            status = RegistrationStatus.RETRYING,
+            host = "sip.example.test",
+            username = "operator",
+            retryAfterSeconds = 15
+        )
+        assertFalse(retryState.isRegistered)
+        assertEquals("Retrying in 15s...", retryState.formattedStatus)
+    }
+
+    @Test
+    fun voipCallStateLifecycleTransitions() {
+        val activeCall = com.example.service.ActiveCallInfo(
+            destinationNumber = "+15551234567",
+            callerIdUsed = "+15559876543",
+            phase = com.example.service.CallPhase.ACTIVE,
+            durationSeconds = 65,
+            isEncrypted = true,
+            audioCodec = "PCMU"
+        )
+        assertTrue(activeCall.isCallActive)
+        assertTrue(activeCall.isTalking)
+        assertEquals("01:05", activeCall.formattedDuration)
+        assertEquals("Secured Line Connected (SRTP)", activeCall.displayStatus)
+
+        val ringingCall = activeCall.copy(phase = com.example.service.CallPhase.RINGING, durationSeconds = 0)
+        assertTrue(ringingCall.isCallActive)
+        assertFalse(ringingCall.isTalking)
+        assertEquals("Ringing Destination (180)...", ringingCall.displayStatus)
+
+        val busyCall = activeCall.copy(
+            phase = com.example.service.CallPhase.ENDED,
+            endReason = "Busy Here (486)",
+            sipResponseCode = 486
+        )
+        assertFalse(busyCall.isCallActive)
+        assertEquals("Busy Here (486)", busyCall.displayStatus)
+    }
 }

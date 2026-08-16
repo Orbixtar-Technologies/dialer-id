@@ -6,8 +6,10 @@ package com.example.service.sip
 enum class RegistrationStatus {
     UNREGISTERED,
     REGISTERING,
+    AUTHENTICATING,
     REGISTERED,
     FAILED,
+    RETRYING,
     EXPIRED,
     UNREGISTERING
 }
@@ -47,8 +49,11 @@ data class SipRegistrationState(
         get() = when {
             needsPassword -> "SIP password required"
             status == RegistrationStatus.UNREGISTERED -> "Unregistered"
-            status == RegistrationStatus.REGISTERING -> "Authenticating..."
+            status == RegistrationStatus.REGISTERING -> "Registering..."
+            status == RegistrationStatus.AUTHENTICATING -> "Authenticating (401 Challenge)..."
             status == RegistrationStatus.REGISTERED -> "Registered (200 OK)"
+            status == RegistrationStatus.RETRYING && retryAfterSeconds > 0 -> "Retrying in ${retryAfterSeconds}s..."
+            status == RegistrationStatus.RETRYING -> "Retrying..."
             status == RegistrationStatus.FAILED && statusCode > 0 -> "Registration Failed ($statusCode)"
             status == RegistrationStatus.FAILED -> "Registration Failed"
             status == RegistrationStatus.EXPIRED -> "Registration Expired"

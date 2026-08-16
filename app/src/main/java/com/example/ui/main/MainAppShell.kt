@@ -1,5 +1,6 @@
 package com.example.ui.main
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,13 +9,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,11 +24,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.Dialpad
-import coil.compose.AsyncImage
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Phone
@@ -38,8 +37,8 @@ import androidx.compose.material.icons.outlined.Dialpad
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Payment
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -47,8 +46,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,20 +55,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.R
 import com.example.service.CallPhase
 import com.example.ui.auth.AuthScreen
 import com.example.ui.auth.AuthViewModel
 import com.example.ui.callerid.CallerIdScreen
 import com.example.ui.callerid.CallerIdViewModel
+import com.example.ui.common.formatBalance
+import com.example.ui.contacts.ContactsScreen
+import com.example.ui.contacts.ContactsViewModel
 import com.example.ui.deposit.DepositScreen
 import com.example.ui.deposit.DepositViewModel
 import com.example.ui.dialer.ActiveCallScreen
@@ -81,18 +83,6 @@ import com.example.ui.history.CallHistoryScreen
 import com.example.ui.history.CallHistoryViewModel
 import com.example.ui.settings.SettingsScreen
 import com.example.ui.settings.SettingsViewModel
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.RoyalBlue50
-import com.example.ui.theme.RoyalBlue600
-import com.example.ui.theme.RoyalBlue700
-import com.example.ui.theme.RoyalBlue800
-import com.example.ui.theme.Slate100
-import com.example.ui.theme.Slate200
-import com.example.ui.theme.Slate400
-import com.example.ui.theme.Slate50
-import com.example.ui.theme.Slate500
-import com.example.ui.theme.Slate700
-import com.example.ui.theme.Slate900
 
 enum class AppTab(
     val title: String,
@@ -107,7 +97,6 @@ enum class AppTab(
     SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, "tab_settings")
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppShell(
     authViewModel: AuthViewModel = viewModel(),
@@ -115,13 +104,18 @@ fun MainAppShell(
     callerIdViewModel: CallerIdViewModel = viewModel(),
     historyViewModel: CallHistoryViewModel = viewModel(),
     depositViewModel: DepositViewModel = viewModel(),
-    settingsViewModel: SettingsViewModel = viewModel()
+    settingsViewModel: SettingsViewModel = viewModel(),
+    contactsViewModel: ContactsViewModel = viewModel()
 ) {
     val authState by authViewModel.uiState.collectAsState()
     val activeCallState by dialerViewModel.activeCallState.collectAsState()
     val userProfile by dialerViewModel.userProfile.collectAsState()
+    val registrationState by dialerViewModel.registrationState.collectAsState()
 
     var currentTab by remember { mutableStateOf(AppTab.DIALER) }
+    // Contacts is a full-screen destination layered over the tabs rather than a
+    // sixth bottom-nav item, which would crowd the bar.
+    var showContacts by remember { mutableStateOf(false) }
 
     if (!authState.isAuthenticated) {
         AuthScreen(
@@ -131,112 +125,160 @@ fun MainAppShell(
         return
     }
 
+    BackHandler(enabled = showContacts) { showContacts = false }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = PureWhite,
+                    color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 2.dp
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 18.dp, vertical = 12.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Brand Logo & Title with HD Badge
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f, fill = false)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(RoyalBlue600),
+                                    .background(MaterialTheme.colorScheme.primary),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Phone,
                                     contentDescription = null,
-                                    tint = PureWhite,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "DialerID",
+                                text = stringResource(R.string.app_name),
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.ExtraBold,
                                     letterSpacing = (-0.5).sp
                                 ),
-                                color = Slate900
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(RoyalBlue50)
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "HD",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                    color = RoyalBlue700,
-                                    fontSize = 10.sp
+                                    text = stringResource(R.string.main_hd_badge),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
                         }
 
-                        // Right side: Live Balance Pill
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Live Balance Pill with + Add button
+                            IconButton(
+                                onClick = { showContacts = true },
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .testTag("topbar_contacts_button")
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Contacts,
+                                        contentDescription = stringResource(R.string.contacts_open),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
+                                    .heightIn(min = 36.dp)
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(RoyalBlue50)
-                                    .border(1.dp, RoyalBlue600.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-                                    .clickable { currentTab = AppTab.DEPOSIT }
-                                    .padding(start = 10.dp, end = 4.dp, top = 3.dp, bottom = 3.dp)
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                        RoundedCornerShape(20.dp)
+                                    )
+                                    .clickable(
+                                        onClickLabel = stringResource(R.string.main_open_deposit)
+                                    ) { currentTab = AppTab.DEPOSIT }
+                                    .padding(start = 10.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
                                     .testTag("topbar_balance_pill")
                             ) {
                                 Text(
-                                    text = "$${if (userProfile.creditBalance * 100 == (userProfile.creditBalance * 100).toLong().toDouble()) String.format("%.2f", userProfile.creditBalance) else String.format("%.4f", userProfile.creditBalance)}",
+                                    text = "$${formatBalance(userProfile.creditBalance)}",
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         fontFamily = FontFamily.Monospace
                                     ),
-                                    color = RoyalBlue800
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Box(
                                     modifier = Modifier
-                                        .size(22.dp)
+                                        .size(24.dp)
                                         .clip(CircleShape)
-                                        .background(RoyalBlue600),
+                                        .background(MaterialTheme.colorScheme.primary),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
-                                        contentDescription = "Add Funds",
-                                        tint = PureWhite,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
                                         modifier = Modifier.size(14.dp)
                                     )
                                 }
                             }
 
                             if (!userProfile.photoUrl.isNullOrEmpty()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                AsyncImage(
-                                    model = userProfile.photoUrl,
-                                    contentDescription = "Avatar",
+                                IconButton(
+                                    onClick = { currentTab = AppTab.SETTINGS },
                                     modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .border(1.dp, Slate200, CircleShape)
-                                        .clickable { currentTab = AppTab.SETTINGS }
-                                )
+                                        .size(44.dp)
+                                        .testTag("topbar_profile_button")
+                                ) {
+                                    AsyncImage(
+                                        model = userProfile.photoUrl,
+                                        contentDescription = stringResource(R.string.main_open_settings),
+                                        modifier = Modifier
+                                            .size(30.dp)
+                                            .clip(CircleShape)
+                                            .border(
+                                                1.dp,
+                                                MaterialTheme.colorScheme.outlineVariant,
+                                                CircleShape
+                                            )
+                                    )
+                                }
                             }
                         }
                     }
@@ -245,18 +287,21 @@ fun MainAppShell(
             bottomBar = {
                 NavigationBar(
                     modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                    containerColor = PureWhite,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 6.dp
                 ) {
-                    AppTab.values().forEach { tab ->
-                        val isSelected = currentTab == tab
+                    AppTab.entries.forEach { tab ->
+                        val isSelected = currentTab == tab && !showContacts
                         NavigationBarItem(
                             selected = isSelected,
-                            onClick = { currentTab = tab },
+                            onClick = {
+                                currentTab = tab
+                                showContacts = false
+                            },
                             icon = {
                                 Icon(
                                     imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
-                                    contentDescription = tab.title,
+                                    contentDescription = null,
                                     modifier = Modifier.size(24.dp)
                                 )
                             },
@@ -265,15 +310,17 @@ fun MainAppShell(
                                     text = tab.title,
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                    )
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = RoyalBlue600,
-                                selectedTextColor = RoyalBlue600,
-                                indicatorColor = RoyalBlue50,
-                                unselectedIconColor = Slate400,
-                                unselectedTextColor = Slate500
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
                             modifier = Modifier.testTag(tab.testTag)
                         )
@@ -285,12 +332,34 @@ fun MainAppShell(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(Slate50)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
-                when (currentTab) {
+                if (showContacts) {
+                    ContactsScreen(
+                        viewModel = contactsViewModel,
+                        isCallEnabled = registrationState.isRegistered &&
+                            userProfile.creditBalance > 0.0,
+                        onCallNumber = { number ->
+                            if (dialerViewModel.placeCallTo(number)) {
+                                showContacts = false
+                                currentTab = AppTab.DIALER
+                            }
+                        },
+                        onFillDialer = { number ->
+                            dialerViewModel.onNumberChanged(number)
+                            showContacts = false
+                            currentTab = AppTab.DIALER
+                        },
+                        onBack = { showContacts = false }
+                    )
+                } else when (currentTab) {
                     AppTab.DIALER -> DialerScreen(
                         viewModel = dialerViewModel,
-                        onNavigateToDeposit = { currentTab = AppTab.DEPOSIT }
+                        contactsViewModel = contactsViewModel,
+                        onNavigateToDeposit = { currentTab = AppTab.DEPOSIT },
+                        onNavigateToCallerIds = { currentTab = AppTab.CALLER_IDS },
+                        onNavigateToHistory = { currentTab = AppTab.HISTORY },
+                        onNavigateToContacts = { showContacts = true }
                     )
                     AppTab.HISTORY -> CallHistoryScreen(
                         viewModel = historyViewModel,

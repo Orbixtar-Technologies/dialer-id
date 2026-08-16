@@ -1,8 +1,7 @@
 package com.example.ui.history
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,12 +18,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallMade
 import androidx.compose.material.icons.filled.CallMissed
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -35,8 +38,6 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,31 +50,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.model.CallLogItem
 import com.example.data.model.CallStatus
-import com.example.ui.theme.Emerald50
-import com.example.ui.theme.Emerald500
-import com.example.ui.theme.Emerald600
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.Rose50
-import com.example.ui.theme.Rose500
-import com.example.ui.theme.RoyalBlue50
-import com.example.ui.theme.RoyalBlue600
-import com.example.ui.theme.RoyalBlue800
-import com.example.ui.theme.Slate100
-import com.example.ui.theme.Slate200
-import com.example.ui.theme.Slate400
-import com.example.ui.theme.Slate50
-import com.example.ui.theme.Slate500
-import com.example.ui.theme.Slate700
-import com.example.ui.theme.Slate900
+import com.example.ui.common.AppTextField
+import com.example.ui.common.formatBalance
+import com.example.ui.theme.onSuccessContainer
+import com.example.ui.theme.successContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -87,50 +82,56 @@ fun CallHistoryScreen(
     val callLogs by viewModel.filteredCallLogs.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var showClearDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = Slate50
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Search Bar & Clear Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
+                AppTextField(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChanged,
-                    placeholder = { Text("Search logs by number or country...") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = Slate500)
-                    },
+                    placeholder = stringResource(R.string.history_search_hint),
+                    leadingIcon = Icons.Default.Search,
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = Slate500)
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.contacts_search_clear)
+                                )
                             }
                         }
                     },
-                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Search
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .testTag("history_search_input"),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = RoyalBlue600,
-                        unfocusedBorderColor = Slate200,
-                        focusedContainerColor = PureWhite,
-                        unfocusedContainerColor = PureWhite
-                    )
+                        .testTag("history_search_input")
                 )
 
                 if (callLogs.isNotEmpty()) {
@@ -138,15 +139,15 @@ fun CallHistoryScreen(
                     IconButton(
                         onClick = { showClearDialog = true },
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(52.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(PureWhite)
-                            .border(1.dp, Slate200, RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .testTag("history_clear_button")
                     ) {
                         Icon(
                             imageVector = Icons.Default.DeleteSweep,
-                            contentDescription = "Clear Logs",
-                            tint = Slate500
+                            contentDescription = stringResource(R.string.history_clear_logs),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -154,74 +155,86 @@ fun CallHistoryScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Filter Chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilterChip(
-                    selected = selectedFilter == HistoryFilter.ALL,
-                    onClick = { viewModel.onFilterSelected(HistoryFilter.ALL) },
-                    label = { Text("All Logs") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = RoyalBlue600,
-                        selectedLabelColor = PureWhite
-                    )
+                HistoryFilterChip(
+                    label = stringResource(R.string.history_filter_all),
+                    isSelected = selectedFilter == HistoryFilter.ALL,
+                    onClick = { viewModel.onFilterSelected(HistoryFilter.ALL) }
                 )
-                FilterChip(
-                    selected = selectedFilter == HistoryFilter.COMPLETED,
-                    onClick = { viewModel.onFilterSelected(HistoryFilter.COMPLETED) },
-                    label = { Text("Completed") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Emerald500,
-                        selectedLabelColor = PureWhite
-                    )
+                HistoryFilterChip(
+                    label = stringResource(R.string.history_filter_completed),
+                    isSelected = selectedFilter == HistoryFilter.COMPLETED,
+                    onClick = { viewModel.onFilterSelected(HistoryFilter.COMPLETED) }
                 )
-                FilterChip(
-                    selected = selectedFilter == HistoryFilter.CANCELLED,
-                    onClick = { viewModel.onFilterSelected(HistoryFilter.CANCELLED) },
-                    label = { Text("Cancelled") },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Slate700,
-                        selectedLabelColor = PureWhite
-                    )
+                HistoryFilterChip(
+                    label = stringResource(R.string.history_filter_cancelled),
+                    isSelected = selectedFilter == HistoryFilter.CANCELLED,
+                    onClick = { viewModel.onFilterSelected(HistoryFilter.CANCELLED) }
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Call Logs List or Empty State
             if (callLogs.isEmpty()) {
+                val isSearching = searchQuery.isNotBlank()
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(bottom = 60.dp),
+                        .padding(bottom = 60.dp)
+                        .testTag("history_empty_state"),
                     contentAlignment = Alignment.Center
                 ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Slate200, RoundedCornerShape(20.dp)),
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = PureWhite)
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(36.dp),
+                                .padding(32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("📋", fontSize = 48.sp)
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.History,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "No Call Records Found",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Slate900
+                                text = if (isSearching) {
+                                    stringResource(R.string.history_no_results_title)
+                                } else {
+                                    stringResource(R.string.history_empty_title)
+                                },
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center
                             )
                             Text(
-                                text = "Your outbound encrypted call records, durations, rates, and caller IDs will populate here.",
+                                text = if (isSearching) {
+                                    stringResource(R.string.history_no_results_body)
+                                } else {
+                                    stringResource(R.string.history_empty_body)
+                                },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Slate500,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
                         }
@@ -240,39 +253,94 @@ fun CallHistoryScreen(
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(80.dp))
+                        Spacer(modifier = Modifier.height(88.dp))
                     }
                 }
             }
         }
 
-        // Clear Confirmation Dialog
         if (showClearDialog) {
             AlertDialog(
                 onDismissRequest = { showClearDialog = false },
-                containerColor = PureWhite,
+                containerColor = MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(20.dp),
-                title = { Text("Clear Call History", fontWeight = FontWeight.Bold, color = Slate900) },
-                text = { Text("Are you sure you want to permanently clear all outbound call history records?") },
+                title = {
+                    Text(
+                        text = stringResource(R.string.history_clear_title),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(R.string.history_clear_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 confirmButton = {
                     Button(
                         onClick = {
                             viewModel.clearAllHistory()
                             showClearDialog = false
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Rose500)
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ),
+                        modifier = Modifier.testTag("confirm_clear_history")
                     ) {
-                        Text("Clear All")
+                        Text(
+                            text = stringResource(R.string.history_clear_confirm),
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showClearDialog = false }) {
-                        Text("Cancel", color = Slate500)
+                        Text(text = stringResource(R.string.action_cancel))
                     }
                 }
             )
         }
     }
+}
+
+@Composable
+private fun HistoryFilterChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = isSelected,
+        onClick = onClick,
+        label = {
+            Text(
+                text = label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        shape = RoundedCornerShape(10.dp),
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            }
+        )
+    )
 }
 
 @Composable
@@ -284,106 +352,171 @@ private fun CallLogCard(
     val formattedTime = remember(log.timestamp) { dateFormat.format(Date(log.timestamp)) }
 
     val formattedDuration = remember(log.durationSeconds) {
-        val mins = log.durationSeconds / 60
-        val secs = log.durationSeconds % 60
-        String.format("%02d:%02d", mins, secs)
+        val minutes = log.durationSeconds / 60
+        val seconds = log.durationSeconds % 60
+        String.format(Locale.US, "%02d:%02d", minutes, seconds)
     }
+    val isCompleted = log.status == CallStatus.COMPLETED
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Slate200, RoundedCornerShape(16.dp))
-            .shadow(2.dp, RoundedCornerShape(16.dp)),
+            .testTag("history_log_${log.id}"),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = PureWhite)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Top Row: Number & Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(if (log.status == CallStatus.COMPLETED) Emerald50 else Rose50),
+                            .background(
+                                if (isCompleted) {
+                                    MaterialTheme.colorScheme.successContainer
+                                } else {
+                                    MaterialTheme.colorScheme.errorContainer
+                                }
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (log.status == CallStatus.COMPLETED) Icons.Default.CallMade else Icons.Default.CallMissed,
-                            contentDescription = log.status.name,
-                            tint = if (log.status == CallStatus.COMPLETED) Emerald600 else Rose500,
+                            imageVector = if (isCompleted) {
+                                Icons.Default.CallMade
+                            } else {
+                                Icons.Default.CallMissed
+                            },
+                            contentDescription = null,
+                            tint = if (isCompleted) {
+                                MaterialTheme.colorScheme.onSuccessContainer
+                            } else {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            },
                             modifier = Modifier.size(18.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = log.destinationNumber,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Slate900
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = "${log.countryName} • $formattedTime",
+                            text = stringResource(
+                                R.string.history_log_meta,
+                                log.countryName,
+                                formattedTime
+                            ),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Slate500
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
 
-                // Redial Button
+                Spacer(modifier = Modifier.width(8.dp))
+
                 IconButton(
                     onClick = onRedial,
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(RoyalBlue50)
+                        .size(44.dp)
+                        .testTag("history_redial_${log.id}")
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Call,
-                        contentDescription = "Redial",
-                        tint = RoyalBlue600,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = stringResource(R.string.history_redial),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Bottom Metric Details (Caller ID Used, Duration, Rate, Total Cost)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Slate50)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(text = "Transmitted ID", style = MaterialTheme.typography.labelSmall, color = Slate400, fontSize = 10.sp)
-                    Text(text = log.callerIdUsed, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold), color = Slate700)
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Duration", style = MaterialTheme.typography.labelSmall, color = Slate400, fontSize = 10.sp)
-                    Text(text = formattedDuration, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace), color = Slate900)
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(text = "Charge ($)", style = MaterialTheme.typography.labelSmall, color = Slate400, fontSize = 10.sp)
-                    Text(
-                        text = if (log.totalCost == 0.0) "Free" else "$${String.format("%.2f", log.totalCost)}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (log.totalCost > 0.0) RoyalBlue600 else Emerald600
-                        )
-                    )
-                }
+                LogMetric(
+                    label = stringResource(R.string.history_metric_caller_id),
+                    value = log.callerIdUsed,
+                    modifier = Modifier.weight(1f)
+                )
+                LogMetric(
+                    label = stringResource(R.string.history_metric_duration),
+                    value = formattedDuration,
+                    alignment = Alignment.CenterHorizontally,
+                    isMonospace = true
+                )
+                LogMetric(
+                    label = stringResource(R.string.history_metric_charge),
+                    value = if (log.totalCost == 0.0) {
+                        stringResource(R.string.history_charge_free)
+                    } else {
+                        formatBalance(log.totalCost)
+                    },
+                    alignment = Alignment.End,
+                    isMonospace = true
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun LogMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    alignment: Alignment.Horizontal = Alignment.Start,
+    isMonospace: Boolean = false
+) {
+    Column(modifier = modifier, horizontalAlignment = alignment) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.Bold,
+                fontFamily = if (isMonospace) FontFamily.Monospace else FontFamily.Default
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

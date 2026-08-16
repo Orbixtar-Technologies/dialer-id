@@ -33,9 +33,10 @@ class DialerConnectionService : ConnectionService() {
     override fun onCreateOutgoingConnectionFailed(
         connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?
-    ) {
-        super.onCreateOutgoingConnectionFailed(connectionManagerPhoneAccount, request)
+    ): Connection {
+        val failed = super.onCreateOutgoingConnectionFailed(connectionManagerPhoneAccount, request)
         Toast.makeText(this, "Unable to place the call", Toast.LENGTH_SHORT).show()
+        return failed
     }
 
     override fun onDestroy() {
@@ -52,17 +53,38 @@ class DialerConnectionService : ConnectionService() {
             stateJob = serviceScope.launch {
                 CallManager.getInstance(this@DialerConnectionService).callState.collect { info ->
                     when (info.phase) {
-                        CallPhase.CONNECTING, CallPhase.RINGING -> {
+                        CallPhase.INITIALIZING, CallPhase.DIALING, CallPhase.CONNECTING, CallPhase.RINGING, CallPhase.EARLY_MEDIA -> {
                             setDialing()
                         }
-                        CallPhase.ACTIVE -> {
+                        CallPhase.CONNECTED, CallPhase.ACTIVE -> {
                             if (!reportedActive) {
                                 reportedActive = true
                                 setActive()
                             }
                         }
+                        CallPhase.ON_HOLD -> {
+                            setOnHold()
+                            reportedActive = false
+                        }
+                        CallPhase.ENDING -> {
+                            // Call termination in progress
+                        }
                         CallPhase.ENDED -> {
-                            setDisconnected(DisconnectCause(DisconnectCause.LOCAL))
+                            val cause = when {
+                                info.sipResponseCode == 486 || info.endReason.contains("busy", ignoreCase = true) ->
+                                    DisconnectCause(DisconnectCause.BUSY, info.endReason)
+                                info.sipResponseCode == 603 || info.endReason.contains("decline", ignoreCase = true) ->
+                                    DisconnectCause(DisconnectCause.REJECTED, info.endReason)
+                                info.sipResponseCode == 408 || info.endReason.contains("timeout", ignoreCase = true) ->
+                                    DisconnectCause(DisconnectCause.TIMED_OUT, info.endReason)
+                                info.sipResponseCode == 404 || info.endReason.contains("not found", ignoreCase = true) ->
+                                    DisconnectCause(DisconnectCause.ERROR, info.endReason)
+                                info.durationSeconds > 0 ->
+                                    DisconnectCause(DisconnectCause.LOCAL, info.endReason)
+                                else ->
+                                    DisconnectCause(DisconnectCause.LOCAL, info.endReason)
+                            }
+                            setDisconnected(cause)
                             destroy()
                             stateJob?.cancel()
                         }
