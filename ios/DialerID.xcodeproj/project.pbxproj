@@ -1,0 +1,472 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FB90684E69A6C96ED866993E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2B4367B873474FE1C68712A /* Assets.xcassets */; };
+		6B1417363A0F6804745E19E9 /* rates.json in Resources */ = {isa = PBXBuildFile; fileRef = 7854B6A48128259094AB4711 /* rates.json */; };
+		3D8614D783A58E705394A40D /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5DB2F38614D9D69AD299E93 /* AppConfig.swift */; };
+		30E0933EFC744A32B232E43F /* DialerIDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C832B2D5F5683B592D773437 /* DialerIDApp.swift */; };
+		816E76B76B15CF2BE9BCD24A /* SipIdAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2524A19A0F0498388EE205C /* SipIdAssignment.swift */; };
+		2CBA861C1344FF2EB11FFDDC /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F7AC644FFD10761658E91B1 /* AuthService.swift */; };
+		1AD2DE83271C066CDC909076 /* CallChargeCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59C28F467C72B7DD4FAA0C8 /* CallChargeCalculator.swift */; };
+		FC83397A24EDF8818CE82B12 /* CallRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F69F6530B1DABFFAA5CAD57 /* CallRate.swift */; };
+		3D78D367E06435572842B129 /* CallRateCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 448CC98E41719E016E0091EB /* CallRateCatalog.swift */; };
+		3AC8836670FDE9643A0B96DA /* RateMarkup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF67F63D217D0D04039FFF4F /* RateMarkup.swift */; };
+		9D474FB415D852D960DC765D /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C556DFF048AD6E342A349E96 /* KeychainStore.swift */; };
+		1EF7C775D8C3D3820A4DA416 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D32A639DBA785C821139EA /* UserProfile.swift */; };
+		E32FC3649370D82A0383E199 /* CryptoCurrencyCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABA04EDBFB3EA1554F56068A /* CryptoCurrencyCatalog.swift */; };
+		726E22A98BF77FFFA72F0A62 /* CryptoPayUri.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4681774AD30A6F6BF009E194 /* CryptoPayUri.swift */; };
+		7719C897E715378940B665CB /* DeviceFeePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE738F7FDB3B433234145CE /* DeviceFeePolicy.swift */; };
+		AC5C3E647B993F9AEE0A9125 /* PendingPayment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 519BCC00280D33C53D89F1F6 /* PendingPayment.swift */; };
+		7E03F6AB6DB543E884FBB9BE /* NowPaymentsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E3013C84B06645C658872A /* NowPaymentsClient.swift */; };
+		EC5596BF307D11EF60E50026 /* NowPaymentsDtos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551D1BCF23B935236A73756C /* NowPaymentsDtos.swift */; };
+		24D27677BDA4967756821EFC /* SipUpClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB6BB691E35A551C653E80B9 /* SipUpClient.swift */; };
+		41AE0A0C5FA801BB4BA9F33F /* DialerRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670394E87390E21501443510 /* DialerRepository.swift */; };
+		67EF2D0D0633CDA8B2D28287 /* FirebaseDatabaseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D954B250540E7994AEE133C6 /* FirebaseDatabaseClient.swift */; };
+		11E4628FEB6071741941B508 /* CallerIdDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B081C6775B24B6CE2B185B36 /* CallerIdDisplay.swift */; };
+		EFF683DAB6FEF57091F3E2A0 /* E164.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7A74877465106A443E2F3A /* E164.swift */; };
+		CCF36E394CB24D96CD60C5BC /* PhoneNumberMetadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67EE3424EEE10E94BB3CF533 /* PhoneNumberMetadata.swift */; };
+		1C4FC05692D7E5E5F4AEECBB /* PhoneNumberSanitizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354993E1E5B63ABFEF118668 /* PhoneNumberSanitizer.swift */; };
+		1A923144DE934176FBAAD38F /* AccountScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4636F0C57FEDF1BBAD67A886 /* AccountScreens.swift */; };
+		E25605DFE71680C3A906DF3D /* AuthScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA9EF46AE45671532A9B58F /* AuthScreen.swift */; };
+		5D7AB83A6875CF90CD463DBC /* CryptoQrEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8175297EC55C25D4AD7A7650 /* CryptoQrEncoder.swift */; };
+		90CC3295A00854FC44A551AB /* ContactsScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631C3389AF6CFE31DE4FCA65 /* ContactsScreens.swift */; };
+		566B8A109C35B1D959D40256 /* DialerScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 203C77A7A4C25D8125C4C457 /* DialerScreen.swift */; };
+		7F5F0BA6BF5761E0B61526AF /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A47EC8D6A47956780F7A80A /* RootView.swift */; };
+		C5D89F172732EDA599099770 /* DevicePaywallScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AD7C83F9C711DA97806C20 /* DevicePaywallScreen.swift */; };
+		66B416DB6C42CCC571D3B7C3 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3711CBD7E263E77042B530DF /* AudioSessionController.swift */; };
+		ABCE390D4D45AAC5066889B8 /* CallKitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D43E8D0A44D3E3DD2AB0AD /* CallKitController.swift */; };
+		961B80F7795B88A7A05B7FBE /* CallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7517BF8F4D20E30FB331BE4 /* CallManager.swift */; };
+		01DDA02049005A42A8A26F8E /* ContactsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E8E6C1CF5895B013C6A022B /* ContactsStore.swift */; };
+		F756F4D04A6BAB1DB828D38A /* SipEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D616E8AD4D1CC9E559F46FD6 /* SipEngine.swift */; };
+		AC2C96AA7984B19FB73F5AE1 /* SipModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBFFF534105A79E8C9225446 /* SipModels.swift */; };
+		B7524756A73D79302301243D /* DialerIDTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 410B3911B80ED16717D45994 /* DialerIDTheme.swift */; };
+		D97DF096756F4494E37882BF /* EmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6196A2EE80641893D2B58474 /* EmptyState.swift */; };
+		28AFD71A0E6638C38E76C68A /* CallRateCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744F778B7295AA65F65291A8 /* CallRateCatalogTests.swift */; };
+		EBA2D10EB451A083AA778C71 /* CryptoPaymentFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90AD88293264CEB390C12D0C /* CryptoPaymentFlowTests.swift */; };
+		E4C152576DFCC092D2395A69 /* E164Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBD8A5379CA77834012513F /* E164Tests.swift */; };
+		8ED9B2D25FAAF9123FB41FA5 /* SipIdAssignmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6506076C5628D55FB12FBC3 /* SipIdAssignmentTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		89B0882076F7A671D0B8842A /* DialerID.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DialerID.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E30D65D56283BC560828B65A /* DialerIDTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DialerIDTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1507F021100E808DBE2FAA00 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2C65B4F7AE4D4021AA8FC16E /* DialerID.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DialerID.entitlements; sourceTree = "<group>"; };
+		B2B4367B873474FE1C68712A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		7854B6A48128259094AB4711 /* rates.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = rates.json; path = Resources/rates.json; sourceTree = "<group>"; };
+		2C9E11471DD392F06D689D68 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		D5DB2F38614D9D69AD299E93 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppConfig.swift; path = App/AppConfig.swift; sourceTree = "<group>"; };
+		C832B2D5F5683B592D773437 /* DialerIDApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DialerIDApp.swift; path = App/DialerIDApp.swift; sourceTree = "<group>"; };
+		B2524A19A0F0498388EE205C /* SipIdAssignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SipIdAssignment.swift; path = Data/Assignment/SipIdAssignment.swift; sourceTree = "<group>"; };
+		8F7AC644FFD10761658E91B1 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthService.swift; path = Data/Auth/AuthService.swift; sourceTree = "<group>"; };
+		D59C28F467C72B7DD4FAA0C8 /* CallChargeCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallChargeCalculator.swift; path = Data/Billing/CallChargeCalculator.swift; sourceTree = "<group>"; };
+		7F69F6530B1DABFFAA5CAD57 /* CallRate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallRate.swift; path = Data/Billing/CallRate.swift; sourceTree = "<group>"; };
+		448CC98E41719E016E0091EB /* CallRateCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallRateCatalog.swift; path = Data/Billing/CallRateCatalog.swift; sourceTree = "<group>"; };
+		EF67F63D217D0D04039FFF4F /* RateMarkup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RateMarkup.swift; path = Data/Billing/RateMarkup.swift; sourceTree = "<group>"; };
+		C556DFF048AD6E342A349E96 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = KeychainStore.swift; path = Data/Local/KeychainStore.swift; sourceTree = "<group>"; };
+		82D32A639DBA785C821139EA /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UserProfile.swift; path = Data/Models/UserProfile.swift; sourceTree = "<group>"; };
+		ABA04EDBFB3EA1554F56068A /* CryptoCurrencyCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CryptoCurrencyCatalog.swift; path = Data/Payments/CryptoCurrencyCatalog.swift; sourceTree = "<group>"; };
+		4681774AD30A6F6BF009E194 /* CryptoPayUri.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CryptoPayUri.swift; path = Data/Payments/CryptoPayUri.swift; sourceTree = "<group>"; };
+		9DE738F7FDB3B433234145CE /* DeviceFeePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeviceFeePolicy.swift; path = Data/Payments/DeviceFeePolicy.swift; sourceTree = "<group>"; };
+		519BCC00280D33C53D89F1F6 /* PendingPayment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PendingPayment.swift; path = Data/Payments/PendingPayment.swift; sourceTree = "<group>"; };
+		D6E3013C84B06645C658872A /* NowPaymentsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NowPaymentsClient.swift; path = Data/Remote/NowPaymentsClient.swift; sourceTree = "<group>"; };
+		551D1BCF23B935236A73756C /* NowPaymentsDtos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NowPaymentsDtos.swift; path = Data/Remote/NowPaymentsDtos.swift; sourceTree = "<group>"; };
+		CB6BB691E35A551C653E80B9 /* SipUpClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SipUpClient.swift; path = Data/Remote/SipUpClient.swift; sourceTree = "<group>"; };
+		670394E87390E21501443510 /* DialerRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DialerRepository.swift; path = Data/Repository/DialerRepository.swift; sourceTree = "<group>"; };
+		D954B250540E7994AEE133C6 /* FirebaseDatabaseClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FirebaseDatabaseClient.swift; path = Data/Repository/FirebaseDatabaseClient.swift; sourceTree = "<group>"; };
+		B081C6775B24B6CE2B185B36 /* CallerIdDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallerIdDisplay.swift; path = Data/Util/CallerIdDisplay.swift; sourceTree = "<group>"; };
+		8C7A74877465106A443E2F3A /* E164.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = E164.swift; path = Data/Util/E164.swift; sourceTree = "<group>"; };
+		67EE3424EEE10E94BB3CF533 /* PhoneNumberMetadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PhoneNumberMetadata.swift; path = Data/Util/PhoneNumberMetadata.swift; sourceTree = "<group>"; };
+		354993E1E5B63ABFEF118668 /* PhoneNumberSanitizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PhoneNumberSanitizer.swift; path = Data/Util/PhoneNumberSanitizer.swift; sourceTree = "<group>"; };
+		4636F0C57FEDF1BBAD67A886 /* AccountScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccountScreens.swift; path = Features/Account/AccountScreens.swift; sourceTree = "<group>"; };
+		AAA9EF46AE45671532A9B58F /* AuthScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthScreen.swift; path = Features/Auth/AuthScreen.swift; sourceTree = "<group>"; };
+		8175297EC55C25D4AD7A7650 /* CryptoQrEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CryptoQrEncoder.swift; path = Features/Checkout/CryptoQrEncoder.swift; sourceTree = "<group>"; };
+		631C3389AF6CFE31DE4FCA65 /* ContactsScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContactsScreens.swift; path = Features/Contacts/ContactsScreens.swift; sourceTree = "<group>"; };
+		203C77A7A4C25D8125C4C457 /* DialerScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DialerScreen.swift; path = Features/Dialer/DialerScreen.swift; sourceTree = "<group>"; };
+		5A47EC8D6A47956780F7A80A /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RootView.swift; path = Features/Main/RootView.swift; sourceTree = "<group>"; };
+		A9AD7C83F9C711DA97806C20 /* DevicePaywallScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DevicePaywallScreen.swift; path = Features/Paywall/DevicePaywallScreen.swift; sourceTree = "<group>"; };
+		3711CBD7E263E77042B530DF /* AudioSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AudioSessionController.swift; path = Services/AudioSessionController.swift; sourceTree = "<group>"; };
+		67D43E8D0A44D3E3DD2AB0AD /* CallKitController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallKitController.swift; path = Services/CallKitController.swift; sourceTree = "<group>"; };
+		C7517BF8F4D20E30FB331BE4 /* CallManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallManager.swift; path = Services/CallManager.swift; sourceTree = "<group>"; };
+		1E8E6C1CF5895B013C6A022B /* ContactsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContactsStore.swift; path = Services/ContactsStore.swift; sourceTree = "<group>"; };
+		D616E8AD4D1CC9E559F46FD6 /* SipEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SipEngine.swift; path = Services/SipEngine.swift; sourceTree = "<group>"; };
+		BBFFF534105A79E8C9225446 /* SipModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SipModels.swift; path = Services/SipModels.swift; sourceTree = "<group>"; };
+		410B3911B80ED16717D45994 /* DialerIDTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DialerIDTheme.swift; path = Theme/DialerIDTheme.swift; sourceTree = "<group>"; };
+		6196A2EE80641893D2B58474 /* EmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmptyState.swift; path = Theme/EmptyState.swift; sourceTree = "<group>"; };
+		744F778B7295AA65F65291A8 /* CallRateCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallRateCatalogTests.swift; sourceTree = "<group>"; };
+		90AD88293264CEB390C12D0C /* CryptoPaymentFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoPaymentFlowTests.swift; sourceTree = "<group>"; };
+		BEBD8A5379CA77834012513F /* E164Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = E164Tests.swift; sourceTree = "<group>"; };
+		B6506076C5628D55FB12FBC3 /* SipIdAssignmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SipIdAssignmentTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CF5BDB0BEAFE176F9629192A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		ADCF10F76EBF2A74473E9DC4 = {
+			isa = PBXGroup;
+			children = (
+				CF8D0BD4B75E8C2C174692A5 /* DialerID */,
+				EEFE21A1443933CA4DE017DA /* DialerIDTests */,
+				2C9E11471DD392F06D689D68 /* Config.xcconfig */,
+				00C45FD35CB0F9C5F764F070 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		00C45FD35CB0F9C5F764F070 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				89B0882076F7A671D0B8842A /* DialerID.app */,
+				E30D65D56283BC560828B65A /* DialerIDTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CF8D0BD4B75E8C2C174692A5 /* DialerID */ = {
+			isa = PBXGroup;
+			children = (
+				1507F021100E808DBE2FAA00 /* Info.plist */,
+				2C65B4F7AE4D4021AA8FC16E /* DialerID.entitlements */,
+				B2B4367B873474FE1C68712A /* Assets.xcassets */,
+				7854B6A48128259094AB4711 /* rates.json */,
+				D5DB2F38614D9D69AD299E93 /* AppConfig.swift */,
+				C832B2D5F5683B592D773437 /* DialerIDApp.swift */,
+				B2524A19A0F0498388EE205C /* SipIdAssignment.swift */,
+				8F7AC644FFD10761658E91B1 /* AuthService.swift */,
+				D59C28F467C72B7DD4FAA0C8 /* CallChargeCalculator.swift */,
+				7F69F6530B1DABFFAA5CAD57 /* CallRate.swift */,
+				448CC98E41719E016E0091EB /* CallRateCatalog.swift */,
+				EF67F63D217D0D04039FFF4F /* RateMarkup.swift */,
+				C556DFF048AD6E342A349E96 /* KeychainStore.swift */,
+				82D32A639DBA785C821139EA /* UserProfile.swift */,
+				ABA04EDBFB3EA1554F56068A /* CryptoCurrencyCatalog.swift */,
+				4681774AD30A6F6BF009E194 /* CryptoPayUri.swift */,
+				9DE738F7FDB3B433234145CE /* DeviceFeePolicy.swift */,
+				519BCC00280D33C53D89F1F6 /* PendingPayment.swift */,
+				D6E3013C84B06645C658872A /* NowPaymentsClient.swift */,
+				551D1BCF23B935236A73756C /* NowPaymentsDtos.swift */,
+				CB6BB691E35A551C653E80B9 /* SipUpClient.swift */,
+				670394E87390E21501443510 /* DialerRepository.swift */,
+				D954B250540E7994AEE133C6 /* FirebaseDatabaseClient.swift */,
+				B081C6775B24B6CE2B185B36 /* CallerIdDisplay.swift */,
+				8C7A74877465106A443E2F3A /* E164.swift */,
+				67EE3424EEE10E94BB3CF533 /* PhoneNumberMetadata.swift */,
+				354993E1E5B63ABFEF118668 /* PhoneNumberSanitizer.swift */,
+				4636F0C57FEDF1BBAD67A886 /* AccountScreens.swift */,
+				AAA9EF46AE45671532A9B58F /* AuthScreen.swift */,
+				8175297EC55C25D4AD7A7650 /* CryptoQrEncoder.swift */,
+				631C3389AF6CFE31DE4FCA65 /* ContactsScreens.swift */,
+				203C77A7A4C25D8125C4C457 /* DialerScreen.swift */,
+				5A47EC8D6A47956780F7A80A /* RootView.swift */,
+				A9AD7C83F9C711DA97806C20 /* DevicePaywallScreen.swift */,
+				3711CBD7E263E77042B530DF /* AudioSessionController.swift */,
+				67D43E8D0A44D3E3DD2AB0AD /* CallKitController.swift */,
+				C7517BF8F4D20E30FB331BE4 /* CallManager.swift */,
+				1E8E6C1CF5895B013C6A022B /* ContactsStore.swift */,
+				D616E8AD4D1CC9E559F46FD6 /* SipEngine.swift */,
+				BBFFF534105A79E8C9225446 /* SipModels.swift */,
+				410B3911B80ED16717D45994 /* DialerIDTheme.swift */,
+				6196A2EE80641893D2B58474 /* EmptyState.swift */,
+			);
+			path = DialerID;
+			sourceTree = "<group>";
+		};
+		EEFE21A1443933CA4DE017DA /* DialerIDTests */ = {
+			isa = PBXGroup;
+			children = (
+				744F778B7295AA65F65291A8 /* CallRateCatalogTests.swift */,
+				90AD88293264CEB390C12D0C /* CryptoPaymentFlowTests.swift */,
+				BEBD8A5379CA77834012513F /* E164Tests.swift */,
+				B6506076C5628D55FB12FBC3 /* SipIdAssignmentTests.swift */,
+			);
+			path = DialerIDTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		29C7B681C8D62CBAC94D51C0 /* DialerID */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7BE9FD589CAD5DAD12BBA239 /* Build configuration list for PBXNativeTarget "DialerID" */;
+			buildPhases = (
+				1CDF2F71A52B082132B04DFF /* Sources */,
+				CF5BDB0BEAFE176F9629192A /* Frameworks */,
+				C02F1309AF4906C92F1EAD44 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DialerID;
+			productName = DialerID;
+			productReference = 89B0882076F7A671D0B8842A /* DialerID.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7EC8F98B7A265120217712DE /* DialerIDTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 761FC3199DE9BECB77613011 /* Build configuration list for PBXNativeTarget "DialerIDTests" */;
+			buildPhases = (
+				7841DBE1BAAF034D23036D63 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DialerIDTests;
+			productName = DialerIDTests;
+			productReference = E30D65D56283BC560828B65A /* DialerIDTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 04F526A8A1724A804402DE31 /* Build configuration list for PBXProject "DialerID" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = ADCF10F76EBF2A74473E9DC4;
+			productRefGroup = 00C45FD35CB0F9C5F764F070 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				29C7B681C8D62CBAC94D51C0 /* DialerID */,
+				7EC8F98B7A265120217712DE /* DialerIDTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C02F1309AF4906C92F1EAD44 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB90684E69A6C96ED866993E /* Assets.xcassets in Resources */,
+				6B1417363A0F6804745E19E9 /* rates.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1CDF2F71A52B082132B04DFF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D8614D783A58E705394A40D /* AppConfig.swift in Sources */,
+				30E0933EFC744A32B232E43F /* DialerIDApp.swift in Sources */,
+				816E76B76B15CF2BE9BCD24A /* SipIdAssignment.swift in Sources */,
+				2CBA861C1344FF2EB11FFDDC /* AuthService.swift in Sources */,
+				1AD2DE83271C066CDC909076 /* CallChargeCalculator.swift in Sources */,
+				FC83397A24EDF8818CE82B12 /* CallRate.swift in Sources */,
+				3D78D367E06435572842B129 /* CallRateCatalog.swift in Sources */,
+				3AC8836670FDE9643A0B96DA /* RateMarkup.swift in Sources */,
+				9D474FB415D852D960DC765D /* KeychainStore.swift in Sources */,
+				1EF7C775D8C3D3820A4DA416 /* UserProfile.swift in Sources */,
+				E32FC3649370D82A0383E199 /* CryptoCurrencyCatalog.swift in Sources */,
+				726E22A98BF77FFFA72F0A62 /* CryptoPayUri.swift in Sources */,
+				7719C897E715378940B665CB /* DeviceFeePolicy.swift in Sources */,
+				AC5C3E647B993F9AEE0A9125 /* PendingPayment.swift in Sources */,
+				7E03F6AB6DB543E884FBB9BE /* NowPaymentsClient.swift in Sources */,
+				EC5596BF307D11EF60E50026 /* NowPaymentsDtos.swift in Sources */,
+				24D27677BDA4967756821EFC /* SipUpClient.swift in Sources */,
+				41AE0A0C5FA801BB4BA9F33F /* DialerRepository.swift in Sources */,
+				67EF2D0D0633CDA8B2D28287 /* FirebaseDatabaseClient.swift in Sources */,
+				11E4628FEB6071741941B508 /* CallerIdDisplay.swift in Sources */,
+				EFF683DAB6FEF57091F3E2A0 /* E164.swift in Sources */,
+				CCF36E394CB24D96CD60C5BC /* PhoneNumberMetadata.swift in Sources */,
+				1C4FC05692D7E5E5F4AEECBB /* PhoneNumberSanitizer.swift in Sources */,
+				1A923144DE934176FBAAD38F /* AccountScreens.swift in Sources */,
+				E25605DFE71680C3A906DF3D /* AuthScreen.swift in Sources */,
+				5D7AB83A6875CF90CD463DBC /* CryptoQrEncoder.swift in Sources */,
+				90CC3295A00854FC44A551AB /* ContactsScreens.swift in Sources */,
+				566B8A109C35B1D959D40256 /* DialerScreen.swift in Sources */,
+				7F5F0BA6BF5761E0B61526AF /* RootView.swift in Sources */,
+				C5D89F172732EDA599099770 /* DevicePaywallScreen.swift in Sources */,
+				66B416DB6C42CCC571D3B7C3 /* AudioSessionController.swift in Sources */,
+				ABCE390D4D45AAC5066889B8 /* CallKitController.swift in Sources */,
+				961B80F7795B88A7A05B7FBE /* CallManager.swift in Sources */,
+				01DDA02049005A42A8A26F8E /* ContactsStore.swift in Sources */,
+				F756F4D04A6BAB1DB828D38A /* SipEngine.swift in Sources */,
+				AC2C96AA7984B19FB73F5AE1 /* SipModels.swift in Sources */,
+				B7524756A73D79302301243D /* DialerIDTheme.swift in Sources */,
+				D97DF096756F4494E37882BF /* EmptyState.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7841DBE1BAAF034D23036D63 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				28AFD71A0E6638C38E76C68A /* CallRateCatalogTests.swift in Sources */,
+				EBA2D10EB451A083AA778C71 /* CryptoPaymentFlowTests.swift in Sources */,
+				E4C152576DFCC092D2395A69 /* E164Tests.swift in Sources */,
+				8ED9B2D25FAAF9123FB41FA5 /* SipIdAssignmentTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		608F2D575CED14F764CA9079 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2C9E11471DD392F06D689D68 /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		247A100AC9F0CA0C3C752103 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2C9E11471DD392F06D689D68 /* Config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		972E3E334866606279B45651 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DialerID/DialerID.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DialerID/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dialerid.app;
+				PRODUCT_NAME = DialerID;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		6BD58678B5D82D2DE2F39F0B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = DialerID/DialerID.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DialerID/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dialerid.app;
+				PRODUCT_NAME = DialerID;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		F3995C4AAA53EE2C6FA96CD1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dialerid.app.tests;
+				PRODUCT_NAME = DialerIDTests;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DialerID.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DialerID";
+			};
+			name = Debug;
+		};
+		2FECDAE74310AE307D756E02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dialerid.app.tests;
+				PRODUCT_NAME = DialerIDTests;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DialerID.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DialerID";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		04F526A8A1724A804402DE31 /* Build configuration list for PBXProject "DialerID" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				608F2D575CED14F764CA9079 /* Debug */,
+				247A100AC9F0CA0C3C752103 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7BE9FD589CAD5DAD12BBA239 /* Build configuration list for PBXNativeTarget "DialerID" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				972E3E334866606279B45651 /* Debug */,
+				6BD58678B5D82D2DE2F39F0B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		761FC3199DE9BECB77613011 /* Build configuration list for PBXNativeTarget "DialerIDTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3995C4AAA53EE2C6FA96CD1 /* Debug */,
+				2FECDAE74310AE307D756E02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}
