@@ -2,6 +2,7 @@ name: Appetize iOS
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
     paths:
       - "ios/**"
@@ -32,8 +33,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${APPETIZE_API_TOKEN:-}" ]; then
-            echo "APPETIZE_API_TOKEN is not set. Add it under repo Settings → Secrets."
-            exit 1
+            echo "APPETIZE_API_TOKEN is not available in this run. Simulator zip stays on the artifact."
+            exit 0
           fi
           if [ -n "${APPETIZE_IOS_PUBLIC_KEY:-}" ]; then
             ENDPOINT="https://api.appetize.io/v1/apps/${APPETIZE_IOS_PUBLIC_KEY}"
