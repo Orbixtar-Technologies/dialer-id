@@ -1,3 +1,6 @@
+# Depot CI copy of the Appetize iOS job.
+# Depot CI sandboxes are Linux only; macos-14 is remapped to Ubuntu.
+# The Simulator zip still requires a Mac with Xcode.
 name: Appetize iOS
 
 on:
@@ -6,18 +9,31 @@ on:
   push:
     paths:
       - "ios/**"
-      - ".github/workflows/appetize-ios.yml"
+      - ".depot/workflows/appetize-ios.yml"
 
 jobs:
   build-and-upload:
-    runs-on: macos-14
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Require Xcode
+        run: |
+          set -euo pipefail
+          if command -v xcodebuild >/dev/null 2>&1; then
+            xcodebuild -version
+            exit 0
+          fi
+          echo "Depot CI has no macOS sandbox, so xcodebuild is not available."
+          echo "Build the Simulator zip on a Mac:"
+          echo "  bash ios/scripts/build_simulator_app.sh"
+          echo "Then upload it to Appetize, or wait until Depot CI adds macOS runners."
+          exit 1
+
       - name: Build iOS Simulator app
-        run: bash ios/scripts/build_simulator_app.sh "$GITHUB_WORKSPACE/DialerID-iphonesimulator.zip"
+        run: bash ios/scripts/build_simulator_app.sh "${GITHUB_WORKSPACE}/DialerID-iphonesimulator.zip"
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
@@ -70,8 +86,10 @@ jobs:
               sys.exit(1)
           url = f"https://appetize.io/app/{public_key}?device=iphone16pro"
           print(url)
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
-              summary.write("## Appetize iOS\n\n")
-              summary.write(f"- publicKey: `{public_key}`\n")
-              summary.write(f"- [Open on iPhone 16 Pro]({url})\n")
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary_path:
+              with open(summary_path, "a", encoding="utf-8") as summary:
+                  summary.write("## Appetize iOS\n\n")
+                  summary.write(f"- publicKey: `{public_key}`\n")
+                  summary.write(f"- [Open on iPhone 16 Pro]({url})\n")
           PY
