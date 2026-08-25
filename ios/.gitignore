@@ -1,0 +1,15 @@
+Pods/
+*.xcworkspace
+!DialerID.xcodeproj/project.xcworkspace
+DerivedData/
+build/
+Secrets.xcconfig
+**/GoogleService-Info.plist
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+.DS_Store
