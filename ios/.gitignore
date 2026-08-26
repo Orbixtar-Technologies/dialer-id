@@ -4,7 +4,6 @@ Pods/
 DerivedData/
 build/
 Secrets.xcconfig
-**/GoogleService-Info.plist
 *.xcuserstate
 xcuserdata/
 *.moved-aside

@@ -16,6 +16,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile') }}
+
       - name: Build iOS Simulator app
         run: bash ios/scripts/build_simulator_app.sh "$GITHUB_WORKSPACE/DialerID-iphonesimulator.zip"
 

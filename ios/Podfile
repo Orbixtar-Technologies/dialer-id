@@ -9,7 +9,10 @@ target 'DialerID' do
   pod 'FirebaseAuth', '~> 11.0'
   pod 'FirebaseDatabase', '~> 11.0'
   pod 'GoogleSignIn', '~> 8.0'
-  pod 'linphone-sdk', '5.3.77'
+  # Appetize / CI cannot use CallKit SIP. Skip the large Linphone download there.
+  unless ENV['SKIP_LINPHONE'] == '1'
+    pod 'linphone-sdk', '5.3.77'
+  end
 end
 
 target 'DialerIDTests' do

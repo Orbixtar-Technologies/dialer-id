@@ -17,6 +17,11 @@ local.properties
 .env
 debug.keystore
 
+# iOS secrets and CocoaPods
+ios/Secrets.xcconfig
+ios/Pods/
+ios/DerivedData/
+
 *.zip
 google-services.json
 

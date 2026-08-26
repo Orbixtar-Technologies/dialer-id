@@ -89,7 +89,7 @@ Appetize does **not** accept an `.ipa`. Upload a zipped **iOS Simulator** `.app`
 
 The Android Appetize app already uploaded from Windows stays on Android. Passing `?device=iphone16pro` on that URL does not turn it into iOS. iPhone devices need a separate iOS upload.
 
-On a Mac (no CocoaPods required for a UI preview; Firebase/Linphone stay optional):
+On a Mac, the Appetize script installs Firebase and Google Sign-In (`SKIP_LINPHONE=1` by default):
 
 ```bash
 cd ios
@@ -108,12 +108,11 @@ Depot CI sandboxes are Linux only, so the Simulator zip still has to be built on
 Optional: after the first iOS upload, store `APPETIZE_IOS_PUBLIC_KEY` so later runs update the same app.
 
 What works there: auth, paywall, wallet, rates, contacts UI.  
-What will not: reliable CallKit, microphone, or a real SIP call. Use a physical iPhone for that.
+The GitHub Actions Appetize job installs Firebase and Google Sign-In pods (`SKIP_LINPHONE=1`). CallKit, microphone, and a real SIP call still will not work there. Use a physical iPhone for that.
 
 ## Secrets
 
 Do not commit:
 
 - `ios/Secrets.xcconfig`
-- `ios/DialerID/GoogleService-Info.plist`
 - `ios/Pods/`
