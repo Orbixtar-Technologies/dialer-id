@@ -1,0 +1,77 @@
+name: Appetize iOS
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/appetize-ios.yml"
+
+jobs:
+  build-and-upload:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build iOS Simulator app
+        run: bash ios/scripts/build_simulator_app.sh "$GITHUB_WORKSPACE/DialerID-iphonesimulator.zip"
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DialerID-iphonesimulator
+          path: DialerID-iphonesimulator.zip
+          if-no-files-found: error
+
+      - name: Upload to Appetize
+        env:
+          APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+          APPETIZE_IOS_PUBLIC_KEY: ${{ secrets.APPETIZE_IOS_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APPETIZE_API_TOKEN:-}" ]; then
+            echo "APPETIZE_API_TOKEN is not available in this run. Simulator zip stays on the artifact."
+            exit 0
+          fi
+          if [ -n "${APPETIZE_IOS_PUBLIC_KEY:-}" ]; then
+            ENDPOINT="https://api.appetize.io/v1/apps/${APPETIZE_IOS_PUBLIC_KEY}"
+          else
+            ENDPOINT="https://api.appetize.io/v1/apps"
+          fi
+          RESP_FILE="$(mktemp)"
+          HTTP_CODE="$(
+            curl -sS -o "$RESP_FILE" -w "%{http_code}" \
+              -X POST "$ENDPOINT" \
+              -H "X-API-KEY: ${APPETIZE_API_TOKEN}" \
+              -F "file=@${GITHUB_WORKSPACE}/DialerID-iphonesimulator.zip" \
+              -F "platform=ios" \
+              -F "note=DialerID iOS simulator" \
+              -F "appPermissions.run=public"
+          )"
+          python3 - "$RESP_FILE" "$HTTP_CODE" <<'PY'
+          import json, os, sys
+          path, code = sys.argv[1], sys.argv[2]
+          raw = open(path, encoding="utf-8").read()
+          try:
+              data = json.loads(raw)
+          except json.JSONDecodeError:
+              print(f"Appetize returned HTTP {code} with non-JSON body", file=sys.stderr)
+              sys.exit(1)
+          if not str(code).startswith("2"):
+              message = data.get("message") or data.get("error") or "upload failed"
+              print(f"Appetize HTTP {code}: {message}", file=sys.stderr)
+              sys.exit(1)
+          public_key = data.get("publicKey")
+          if not public_key:
+              print("Appetize response missing publicKey", file=sys.stderr)
+              sys.exit(1)
+          url = f"https://appetize.io/app/{public_key}?device=iphone16pro"
+          print(url)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("## Appetize iOS\n\n")
+              summary.write(f"- publicKey: `{public_key}`\n")
+              summary.write(f"- [Open on iPhone 16 Pro]({url})\n")
+          PY

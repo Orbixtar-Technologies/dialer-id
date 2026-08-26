@@ -48,6 +48,7 @@ def main() -> None:
         "test_target": hid("target:tests"),
         "sources_phase": hid("phase:sources"),
         "resources_phase": hid("phase:resources"),
+        "firebase_plist_phase": hid("phase:firebaseplist"),
         "frameworks_phase": hid("phase:frameworks"),
         "test_sources_phase": hid("phase:testsources"),
         "info": hid("ref:Info.plist"),
@@ -189,6 +190,7 @@ def main() -> None:
 				{ids["sources_phase"]} /* Sources */,
 				{ids["frameworks_phase"]} /* Frameworks */,
 				{ids["resources_phase"]} /* Resources */,
+				{ids["firebase_plist_phase"]} /* Copy GoogleService-Info.plist if present */,
 			);
 			buildRules = (
 			);
@@ -254,6 +256,24 @@ def main() -> None:
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		{ids["firebase_plist_phase"]} /* Copy GoogleService-Info.plist if present */ = {{
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy GoogleService-Info.plist if present";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -f \\"$SRCROOT/DialerID/GoogleService-Info.plist\\" ]; then\\n  cp \\"$SRCROOT/DialerID/GoogleService-Info.plist\\" \\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/GoogleService-Info.plist\\"\\nfi\\n";
+		}};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		{ids["sources_phase"]} /* Sources */ = {{
