@@ -35,7 +35,7 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
 
     func updateUser(uid: String, values: [String: Any]) {
         #if canImport(FirebaseDatabase)
-        database.reference(withPath: "\(FirebasePaths.users)/\(uid)").updateChildValues(values)
+        database.reference(withPath: "\(FirebasePaths.users)/\(uid)").updateChildValues(values) { _, _ in }
         #endif
     }
 
@@ -87,9 +87,9 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
             "exempt": exempt
         ]
         let key = Self.safeKey(deviceId)
-        database.reference(withPath: "\(FirebasePaths.users)/\(uid)/\(FirebasePaths.devices)/\(key)")
+        try? await database.reference(withPath: "\(FirebasePaths.users)/\(uid)/\(FirebasePaths.devices)/\(key)")
             .updateChildValues(record)
-        database.reference(withPath: "\(FirebasePaths.deviceIndex)/\(key)").updateChildValues([
+        try? await database.reference(withPath: "\(FirebasePaths.deviceIndex)/\(key)").updateChildValues([
             "uid": uid,
             "registeredAt": now,
             "exempt": exempt
@@ -119,7 +119,7 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
                 "kind": kind.rawValue,
                 "amountUsd": amountUsd,
                 "appliedAt": Int64(Date().timeIntervalSince1970 * 1000)
-            ])
+            ]) { _, _ in }
         #endif
     }
 
