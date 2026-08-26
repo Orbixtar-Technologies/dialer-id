@@ -54,6 +54,13 @@ if [[ ! -f "$APP/GoogleService-Info.plist" ]]; then
   exit 1
 fi
 
+if [[ "$SKIP_LINPHONE" != "1" ]]; then
+  if strings "$APP/DialerID" | grep -q "Linphone SDK is not linked"; then
+    echo "DialerID compiled the Linphone stub. linphonesw was not visible to Swift." >&2
+    exit 1
+  fi
+fi
+
 rm -f "$OUT_ZIP"
 (
   cd "$(dirname "$APP")"

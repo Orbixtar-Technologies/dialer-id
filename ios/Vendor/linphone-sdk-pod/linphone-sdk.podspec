@@ -15,12 +15,15 @@ Pod::Spec.new do |s|
     OpenGLES CoreGraphics CoreVideo CFNetwork Security SystemConfiguration
   ]
   s.libraries = %w[c++ iconv xml2 z resolv sqlite3]
+  s.swift_version = "5.0"
   s.pod_target_xcconfig = {
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++17",
+    "DEFINES_MODULE" => "YES",
     "ENABLE_BITCODE" => "NO",
     "OTHER_LDFLAGS" => "$(inherited) -ObjC"
   }
   s.user_target_xcconfig = {
-    "ENABLE_BITCODE" => "NO"
+    "ENABLE_BITCODE" => "NO",
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS" => "$(inherited) LINPHONE_ENABLED"
   }
 end

@@ -1,7 +1,7 @@
 import Combine
 import Foundation
 
-#if canImport(linphonesw)
+#if LINPHONE_ENABLED
 import linphonesw
 #endif
 
@@ -23,7 +23,7 @@ final class SipEngine: ObservableObject {
     var onEnded: ((String) -> Void)?
 
     private var currentConfig: SipConfig?
-    #if canImport(linphonesw)
+    #if LINPHONE_ENABLED
     private var core: Core?
     private var currentCall: Call?
     private var iterateTimer: Timer?
@@ -62,7 +62,7 @@ final class SipEngine: ObservableObject {
             port: sipConfig.port,
             statusMessage: "Registering..."
         )
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         triedAlternateTransport = false
         ensureCore()
         applyAccount(sipConfig, transport: .Udp)
@@ -83,7 +83,7 @@ final class SipEngine: ObservableObject {
         isRegistered = false
         hasActiveCall = false
         registrationState = SipRegistrationState(status: .unregistered, statusMessage: "Unregistered")
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         try? core?.clearAccounts()
         try? core?.clearAllAuthInfo()
         #endif
@@ -91,7 +91,7 @@ final class SipEngine: ObservableObject {
 
     func startOutboundCall(sipConfig: SipConfig, destination: String, preferredCodec: G711CodecType?) {
         let sipConfig = sipConfig.resolvedForRegistration()
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         if currentCall != nil { return }
         #endif
         guard let sanitized = PhoneNumberSanitizer.sanitizeDestination(destination) else {
@@ -108,7 +108,7 @@ final class SipEngine: ObservableObject {
         }
         register(sipConfig: sipConfig)
         onInitializing?("Initializing...")
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         ensureCore()
         guard let core else {
             onError?(500, "SIP engine failed to start")
@@ -135,7 +135,7 @@ final class SipEngine: ObservableObject {
     }
 
     func stopCall(reason: String = "Call Ended") {
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         try? currentCall?.terminate()
         currentCall = nil
         #endif
@@ -144,13 +144,13 @@ final class SipEngine: ObservableObject {
     }
 
     func sendDtmf(_ digit: Character) {
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         try? currentCall?.sendDtmf(dtmf: digit)
         #endif
     }
 
     func setMicrophoneMuted(_ muted: Bool) {
-        #if canImport(linphonesw)
+        #if LINPHONE_ENABLED
         core?.micEnabled = !muted
         #endif
     }
@@ -185,7 +185,7 @@ final class SipEngine: ObservableObject {
         return SipTestResult(isSuccess: false, statusCode: 408, message: "REGISTER timed out", latencyMs: 20_000)
     }
 
-    #if canImport(linphonesw)
+    #if LINPHONE_ENABLED
     private func ensureCore() {
         if core != nil { return }
         do {
