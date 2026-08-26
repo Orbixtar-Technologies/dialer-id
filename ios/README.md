@@ -96,11 +96,14 @@ cd ios
 bash scripts/build_simulator_app.sh
 ```
 
-Upload the resulting `ios/build/DialerID-iphonesimulator.zip` in the Appetize dashboard, or let GitHub Actions do it:
+Upload the resulting `ios/build/DialerID-iphonesimulator.zip` in the Appetize dashboard, or use Depot CI (`.depot/workflows/appetize-ios.yml`):
 
-1. Add repo secret `APPETIZE_API_TOKEN`.
-2. Push `ios/` plus `.github/workflows/appetize-ios.yml`.
-3. Open the iOS public URL from the workflow summary, with `?device=iphone16pro`.
+1. Add Depot CI secret `APPETIZE_API_TOKEN` (`depot ci secrets add APPETIZE_API_TOKEN`).
+2. Push `ios/` plus `.depot/workflows/appetize-ios.yml` and merge to the default branch.
+3. Dispatch with `depot ci run --workflow .depot/workflows/appetize-ios.yml --forge origin`. After merge, `depot ci dispatch --repo usmanliaqatdeveloper/dialer-id --workflow appetize-ios.yml --ref main` also works.
+4. Open the iOS public URL from the run summary, with `?device=iphone16pro`.
+
+Depot CI sandboxes are Linux only, so the Simulator zip still has to be built on a Mac until Depot adds macOS runners. The workflow fails early with that message if `xcodebuild` is missing.
 
 Optional: after the first iOS upload, store `APPETIZE_IOS_PUBLIC_KEY` so later runs update the same app.
 
