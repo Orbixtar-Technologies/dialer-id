@@ -107,14 +107,16 @@ final class CallManager: ObservableObject {
         debitIfNeeded()
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let manager = self else { return }
             Task { @MainActor in
-                self?.tick()
+                manager.tick()
             }
         }
         billingTimer?.invalidate()
         billingTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let manager = self else { return }
             Task { @MainActor in
-                self?.debitIfNeeded()
+                manager.debitIfNeeded()
             }
         }
     }
