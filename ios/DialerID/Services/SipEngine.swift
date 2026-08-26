@@ -122,7 +122,6 @@ final class SipEngine: ObservableObject {
         do {
             let params = try core.createCallParams(call: nil)
             params.mediaEncryption = .SRTP
-            params.avpfMode = .Disabled
             currentCall = try core.inviteAddressWithParams(addr: address, params: params)
             hasActiveCall = currentCall != nil
             onDialing?("Dialing...")
@@ -145,7 +144,9 @@ final class SipEngine: ObservableObject {
 
     func sendDtmf(_ digit: Character) {
         #if LINPHONE_ENABLED
-        try? currentCall?.sendDtmf(dtmf: digit)
+        if let ascii = digit.asciiValue {
+            try? currentCall?.sendDtmf(dtmf: CChar(ascii))
+        }
         #endif
     }
 
@@ -192,14 +193,14 @@ final class SipEngine: ObservableObject {
             let created = try Factory.Instance.createCore(configPath: nil, factoryConfigPath: nil, systemContext: nil)
             created.mediaEncryptionMandatory = false
             let listener = CoreDelegateStub(
-                onAccountRegistrationStateChanged: { [weak self] _, _, state, message in
-                    Task { @MainActor in
-                        self?.handleRegistration(state: state, message: message)
-                    }
-                },
                 onCallStateChanged: { [weak self] _, call, state, message in
                     Task { @MainActor in
                         self?.handleCall(call: call, state: state, message: message)
+                    }
+                },
+                onAccountRegistrationStateChanged: { [weak self] _, _, state, message in
+                    Task { @MainActor in
+                        self?.handleRegistration(state: state, message: message)
                     }
                 }
             )
@@ -220,10 +221,11 @@ final class SipEngine: ObservableObject {
         guard let core else { return }
         try? core.clearAccounts()
         try? core.clearAllAuthInfo()
+        let transportName = transport == .Tcp ? "tcp" : "udp"
         let identity = try? Factory.Instance.createAddress(addr: "sip:\(sipConfig.username)@\(sipConfig.host)")
-        let server = try? Factory.Instance.createAddress(addr: "sip:\(sipConfig.host):\(sipConfig.port)")
-        server?.transport = transport
+        let server = try? Factory.Instance.createAddress(addr: "sip:\(sipConfig.host):\(sipConfig.port);transport=\(transportName)")
         guard let identity, let server else { return }
+        try? server.setTransport(newValue: transport)
         let auth = try? Factory.Instance.createAuthInfo(
             username: sipConfig.username,
             userid: sipConfig.username,
@@ -236,8 +238,8 @@ final class SipEngine: ObservableObject {
             core.addAuthInfo(info: auth)
         }
         if let params = try? core.createAccountParams() {
-            params.identityAddress = identity
-            params.serverAddress = server
+            try? params.setIdentityaddress(newValue: identity)
+            try? params.setServeraddress(newValue: server)
             params.registerEnabled = true
             params.expires = 300
             if let account = try? core.createAccount(params: params) {
