@@ -53,14 +53,18 @@ final class AuthService: ObservableObject {
 
     func signIn(email: String, password: String) async throws -> AuthSignInResult {
         #if canImport(FirebaseAuth)
-        let result = try await Auth.auth().signIn(withEmail: email, password: password)
-        refresh()
-        return AuthSignInResult(
-            uid: result.user.uid,
-            email: result.user.email ?? email,
-            displayName: result.user.displayName ?? "",
-            isNewUser: result.additionalUserInfo?.isNewUser ?? false
-        )
+        do {
+            let result = try await Auth.auth().signIn(withEmail: email, password: password)
+            refresh()
+            return AuthSignInResult(
+                uid: result.user.uid,
+                email: result.user.email ?? email,
+                displayName: result.user.displayName ?? "",
+                isNewUser: result.additionalUserInfo?.isNewUser ?? false
+            )
+        } catch {
+            throw mappedAuthError(error)
+        }
         #else
         throw AuthServiceError.firebaseUnavailable
         #endif
@@ -68,17 +72,21 @@ final class AuthService: ObservableObject {
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthSignInResult {
         #if canImport(FirebaseAuth)
-        let result = try await Auth.auth().createUser(withEmail: email, password: password)
-        let change = result.user.createProfileChangeRequest()
-        change.displayName = name
-        try await change.commitChanges()
-        refresh()
-        return AuthSignInResult(
-            uid: result.user.uid,
-            email: result.user.email ?? email,
-            displayName: name,
-            isNewUser: true
-        )
+        do {
+            let result = try await Auth.auth().createUser(withEmail: email, password: password)
+            let change = result.user.createProfileChangeRequest()
+            change.displayName = name
+            try await change.commitChanges()
+            refresh()
+            return AuthSignInResult(
+                uid: result.user.uid,
+                email: result.user.email ?? email,
+                displayName: name,
+                isNewUser: true
+            )
+        } catch {
+            throw mappedAuthError(error)
+        }
         #else
         throw AuthServiceError.firebaseUnavailable
         #endif
@@ -130,4 +138,16 @@ final class AuthService: ObservableObject {
         #endif
         refresh()
     }
+
+    #if canImport(FirebaseAuth)
+    private func mappedAuthError(_ error: Error) -> Error {
+        let text = error.localizedDescription.lowercased()
+        if text.contains("keychain") {
+            return AuthServiceError.message(
+                "Could not save the sign-in session on this simulator. Close the Appetize tab and try again, or sign in on a physical iPhone."
+            )
+        }
+        return error
+    }
+    #endif
 }

@@ -1,5 +1,8 @@
 import SwiftUI
 import UIKit
+#if canImport(FirebaseAuth)
+import FirebaseAuth
+#endif
 #if canImport(FirebaseCore)
 import FirebaseCore
 #endif
@@ -41,6 +44,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
             FirebaseApp.configure()
         }
         #endif
+        #if canImport(FirebaseAuth)
+        configureFirebaseAuthKeychain()
+        #endif
         return true
     }
 
@@ -69,3 +75,20 @@ final class AppSession: ObservableObject {
         }
     }
 }
+
+#if canImport(FirebaseAuth)
+private func configureFirebaseAuthKeychain() {
+    let candidates = [
+        Bundle.main.bundleIdentifier,
+        "com.dialerid.app"
+    ].compactMap { $0 }
+    for group in candidates {
+        do {
+            try Auth.auth().useUserAccessGroup(group)
+            return
+        } catch {
+            continue
+        }
+    }
+}
+#endif
