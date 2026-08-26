@@ -2,7 +2,9 @@ platform :ios, '16.0'
 use_frameworks!
 
 source 'https://cdn.cocoapods.org/'
-source 'https://gitlab.linphone.org/BC/public/podspec.git'
+unless ENV['SKIP_LINPHONE'] == '1'
+  source 'https://gitlab.linphone.org/BC/public/podspec.git'
+end
 
 target 'DialerID' do
   pod 'FirebaseCore', '~> 11.0'
