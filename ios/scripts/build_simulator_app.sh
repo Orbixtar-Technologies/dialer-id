@@ -34,7 +34,6 @@ xcodebuild \
   CODE_SIGN_IDENTITY=- \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=YES \
-  CODE_SIGN_ENTITLEMENTS=DialerID/DialerID.entitlements \
   ONLY_ACTIVE_ARCH=NO \
   build
 

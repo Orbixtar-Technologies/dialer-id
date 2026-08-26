@@ -122,7 +122,7 @@ final class AuthService: ObservableObject {
             if (error as NSError).code == GIDSignInError.canceled.rawValue {
                 throw AuthServiceError.cancelled
             }
-            throw error
+            throw mappedAuthError(error)
         }
         #else
         throw AuthServiceError.firebaseUnavailable
