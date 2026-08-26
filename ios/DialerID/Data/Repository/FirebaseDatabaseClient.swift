@@ -23,10 +23,10 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
     func observeUser(uid: String, onChange: @escaping (UserProfile) -> Void) -> () -> Void {
         #if canImport(FirebaseDatabase)
         let ref = database.reference(withPath: "\(FirebasePaths.users)/\(uid)")
-        let handle = ref.observe(.value) { snapshot in
+        let handle = ref.observe(.value, with: { snapshot in
             let map = snapshot.value as? [String: Any] ?? [:]
             onChange(UserProfile.fromMap(map, uid: uid))
-        }
+        }, withCancel: { _ in })
         return { ref.removeObserver(withHandle: handle) }
         #else
         return {}
@@ -41,14 +41,14 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
 
     func getUser(uid: String) async -> UserProfile? {
         #if canImport(FirebaseDatabase)
-        await withCheckedContinuation { continuation in
-            database.reference(withPath: "\(FirebasePaths.users)/\(uid)").observeSingleEvent(of: .value) { snapshot in
-                guard snapshot.exists(), let map = snapshot.value as? [String: Any] else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                continuation.resume(returning: UserProfile.fromMap(map, uid: uid))
+        do {
+            let snapshot = try await database.reference(withPath: "\(FirebasePaths.users)/\(uid)").getData()
+            guard snapshot.exists(), let map = snapshot.value as? [String: Any] else {
+                return nil
             }
+            return UserProfile.fromMap(map, uid: uid)
+        } catch {
+            return nil
         }
         #else
         return nil
@@ -57,12 +57,14 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
 
     func isDeviceRegistered(uid: String, deviceId: String) async -> Bool {
         #if canImport(FirebaseDatabase)
-        await withCheckedContinuation { continuation in
+        do {
             let key = Self.safeKey(deviceId)
-            database.reference(withPath: "\(FirebasePaths.users)/\(uid)/\(FirebasePaths.devices)/\(key)")
-                .observeSingleEvent(of: .value) { snapshot in
-                    continuation.resume(returning: snapshot.exists())
-                }
+            let snapshot = try await database
+                .reference(withPath: "\(FirebasePaths.users)/\(uid)/\(FirebasePaths.devices)/\(key)")
+                .getData()
+            return snapshot.exists()
+        } catch {
+            return false
         }
         #else
         return false
@@ -99,12 +101,14 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
 
     func wasPaymentProcessed(uid: String, paymentId: String) async -> Bool {
         #if canImport(FirebaseDatabase)
-        await withCheckedContinuation { continuation in
+        do {
             let key = Self.safeKey(paymentId)
-            database.reference(withPath: "\(FirebasePaths.users)/\(uid)/\(FirebasePaths.processedPayments)/\(key)")
-                .observeSingleEvent(of: .value) { snapshot in
-                    continuation.resume(returning: snapshot.exists())
-                }
+            let snapshot = try await database
+                .reference(withPath: "\(FirebasePaths.users)/\(uid)/\(FirebasePaths.processedPayments)/\(key)")
+                .getData()
+            return snapshot.exists()
+        } catch {
+            return false
         }
         #else
         return false
@@ -154,19 +158,30 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
 
     #if canImport(FirebaseDatabase)
     private func loadPool() async -> [SipLineIdentity] {
-        await withCheckedContinuation { continuation in
-            database.reference(withPath: SipIdAssignment.poolPath).observeSingleEvent(of: .value) { snapshot in
-                let parsed = SipIdAssignment.parseIdentities(snapshot.value)
-                continuation.resume(returning: parsed)
-            }
+        await snapshotValue(at: SipIdAssignment.poolPath) { snapshot, error in
+            guard error == nil else { return [] }
+            return SipIdAssignment.parseIdentities(snapshot?.value)
         }
     }
 
     private func readAssignments() async -> [String: SipIdAssignmentRecord] {
+        await snapshotValue(at: SipIdAssignment.assignmentsPath) { snapshot, error in
+            SipIdAssignment.parseAssignments(snapshot?.value, error: error)
+        }
+    }
+
+    private func snapshotValue<T>(
+        at path: String,
+        map: @escaping (DataSnapshot?, Error?) -> T
+    ) async -> T {
         await withCheckedContinuation { continuation in
-            database.reference(withPath: SipIdAssignment.assignmentsPath).observeSingleEvent(of: .value) { snapshot in
-                continuation.resume(returning: SipIdAssignment.parseAssignments(snapshot.value))
-            }
+            let once = OnceResume(continuation)
+            let ref = database.reference(withPath: path)
+            ref.observeSingleEvent(of: .value, with: { snapshot in
+                once.resume(returning: map(snapshot, nil))
+            }, withCancel: { error in
+                once.resume(returning: map(nil, error))
+            })
         }
     }
 
@@ -177,6 +192,7 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
         preferFirst: Bool
     ) async throws -> SipIdAssignmentRecord {
         try await withCheckedThrowingContinuation { continuation in
+            let once = OnceThrowingResume(continuation)
             database.reference(withPath: SipIdAssignment.assignmentsPath).runTransactionBlock { currentData in
                 let assignments = SipIdAssignment.parseAssignments(currentData.value)
                 let now = Int64(Date().timeIntervalSince1970 * 1000)
@@ -216,19 +232,61 @@ final class FirebaseDatabaseClient: @unchecked Sendable {
                 }
             } andCompletionBlock: { error, committed, snapshot in
                 if let error {
-                    continuation.resume(throwing: error)
+                    once.resume(throwing: error)
                     return
                 }
                 let assignments = SipIdAssignment.parseAssignments(snapshot?.value)
                 if let record = SipIdAssignment.findByUid(assignments, uid: uid) {
-                    continuation.resume(returning: record)
+                    once.resume(returning: record)
                 } else {
-                    continuation.resume(throwing: SignupCapacityException())
+                    once.resume(throwing: SignupCapacityException())
                 }
             }
         }
     }
     #endif
+
+    private final class OnceResume<T>: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<T, Never>?
+
+        init(_ continuation: CheckedContinuation<T, Never>) {
+            self.continuation = continuation
+        }
+
+        func resume(returning value: T) {
+            lock.lock()
+            let pending = continuation
+            continuation = nil
+            lock.unlock()
+            pending?.resume(returning: value)
+        }
+    }
+
+    private final class OnceThrowingResume<T>: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<T, Error>?
+
+        init(_ continuation: CheckedContinuation<T, Error>) {
+            self.continuation = continuation
+        }
+
+        func resume(returning value: T) {
+            lock.lock()
+            let pending = continuation
+            continuation = nil
+            lock.unlock()
+            pending?.resume(returning: value)
+        }
+
+        func resume(throwing error: Error) {
+            lock.lock()
+            let pending = continuation
+            continuation = nil
+            lock.unlock()
+            pending?.resume(throwing: error)
+        }
+    }
 
     static func safeKey(_ raw: String) -> String {
         raw.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -197,6 +197,41 @@ enum SipIdAssignment {
         return base
     }
 
+    static func recordFromUserFields(
+        assignedSipId: String,
+        username: String,
+        deviceId: String,
+        uid: String
+    ) -> SipIdAssignmentRecord? {
+        let trimmedUid = uid.trimmingCharacters(in: .whitespacesAndNewlines)
+        let assigned = assignedSipId.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !assigned.isEmpty {
+            let resolvedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+            return SipIdAssignmentRecord(
+                sipId: assigned,
+                firebaseUid: trimmedUid,
+                assignedAt: 0,
+                username: resolvedUsername.isEmpty ? assigned : resolvedUsername,
+                deviceId: deviceId
+            )
+        }
+        let derived = sipIdOf(username: username, deviceId: deviceId)
+        if derived.isEmpty { return nil }
+        let resolvedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        return SipIdAssignmentRecord(
+            sipId: derived,
+            firebaseUid: trimmedUid,
+            assignedAt: 0,
+            username: resolvedUsername.isEmpty ? derived : resolvedUsername,
+            deviceId: deviceId
+        )
+    }
+
+    static func parseAssignments(_ raw: Any?, error: Error?) -> [String: SipIdAssignmentRecord] {
+        guard error == nil else { return [:] }
+        return parseAssignments(raw)
+    }
+
     static func parseAssignments(_ raw: Any?) -> [String: SipIdAssignmentRecord] {
         guard let map = raw as? [String: Any] else { return [:] }
         var result: [String: SipIdAssignmentRecord] = [:]

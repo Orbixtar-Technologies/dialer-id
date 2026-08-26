@@ -74,6 +74,46 @@ final class SipIdAssignmentTests: XCTestCase {
         XCTAssertEqual(result, .noUnusedId)
     }
 
+    func testParseAssignmentsReturnsEmptyWhenQueryFailed() {
+        let raw: [String: Any] = [
+            "13251": ["firebaseUid": "u1", "assignedAt": 1, "username": "13251", "deviceId": "10404"]
+        ]
+        let denied = NSError(domain: "FIRDatabase", code: 1, userInfo: [
+            NSLocalizedDescriptionKey: "permission_denied"
+        ])
+        XCTAssertTrue(SipIdAssignment.parseAssignments(raw, error: denied).isEmpty)
+        XCTAssertEqual(SipIdAssignment.parseAssignments(raw, error: nil)["13251"]?.firebaseUid, "u1")
+    }
+
+    func testRecordFromUserFieldsUsesProfileWhenLedgerIsUnavailable() {
+        let fromAssigned = SipIdAssignment.recordFromUserFields(
+            assignedSipId: "13251",
+            username: "13251",
+            deviceId: "10404",
+            uid: "user-1"
+        )
+        XCTAssertEqual(fromAssigned?.sipId, "13251")
+        XCTAssertEqual(fromAssigned?.firebaseUid, "user-1")
+        XCTAssertEqual(fromAssigned?.deviceId, "10404")
+
+        let fromSipOnly = SipIdAssignment.recordFromUserFields(
+            assignedSipId: "",
+            username: "13252",
+            deviceId: "10405",
+            uid: "user-2"
+        )
+        XCTAssertEqual(fromSipOnly?.sipId, "13252")
+
+        XCTAssertNil(
+            SipIdAssignment.recordFromUserFields(
+                assignedSipId: "",
+                username: "",
+                deviceId: "",
+                uid: "user-3"
+            )
+        )
+    }
+
     func testApplyToSipConfigKeepsExistingPasswordAndHost() {
         let existing = SipConfig(host: "sip.example.test", password: "local-only", port: 5060)
         let merged = SipIdAssignment.applyToSipConfig(

@@ -203,22 +203,28 @@ final class DialerRepository: ObservableObject {
     }
 
     private func ensureExistingLine(uid: String) async {
-        if let existing = await database.findAssignment(uid: uid) {
-            applyAssignment(uid: uid, record: existing)
+        let profileRecord = SipIdAssignment.recordFromUserFields(
+            assignedSipId: userProfile.assignedSipId,
+            username: userProfile.sipConfig?.username ?? "",
+            deviceId: userProfile.sipConfig?.deviceId ?? "",
+            uid: uid
+        )
+        if let profileRecord {
+            applyAssignment(uid: uid, record: profileRecord)
+        }
+
+        if let ledger = await database.findAssignment(uid: uid) {
+            applyAssignment(uid: uid, record: ledger)
             return
         }
-        let sipId = userProfile.assignedSipId.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !sipId.isEmpty {
-            let identity = SipLineIdentity(
-                sipId: sipId,
-                username: userProfile.sipConfig?.username ?? sipId,
-                deviceId: userProfile.sipConfig?.deviceId ?? ""
-            )
-            if let claimed = try? await database.claimSpecific(uid: uid, identity: identity) {
+
+        if let profileRecord {
+            if let claimed = try? await database.claimSpecific(uid: uid, identity: profileRecord.toLineIdentity()) {
                 applyAssignment(uid: uid, record: claimed)
-                return
             }
+            return
         }
+
         await assignLineIfNeeded(uid: uid, forceNew: false)
     }
 
