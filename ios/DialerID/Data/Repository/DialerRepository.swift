@@ -154,6 +154,12 @@ final class DialerRepository: ObservableObject {
         LocalCallLogStore.shared.save([])
     }
 
+    func resolvedSipConfig() -> SipConfig? {
+        userProfile.sipConfig?.resolvedForRegistration(
+            localPassword: keychain.password(uid: userProfile.uid)
+        )
+    }
+
     func isDeviceRegistered() async -> Bool {
         await database.isDeviceRegistered(uid: userProfile.uid, deviceId: DeviceIdentity.stableDeviceId())
     }

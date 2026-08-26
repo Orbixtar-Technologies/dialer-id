@@ -11,6 +11,7 @@ final class SipEngine: ObservableObject {
 
     @Published private(set) var registrationState = SipRegistrationState()
     @Published private(set) var isRegistered = false
+    @Published private(set) var hasActiveCall = false
 
     var onInitializing: ((String) -> Void)?
     var onDialing: ((String) -> Void)?
@@ -27,9 +28,11 @@ final class SipEngine: ObservableObject {
     private var currentCall: Call?
     private var iterateTimer: Timer?
     private var coreListener: CoreDelegateStub?
+    private var triedAlternateTransport = false
     #endif
 
     func register(sipConfig: SipConfig, force: Bool = false) {
+        let sipConfig = sipConfig.resolvedForRegistration()
         if sipConfig.needsPassword() {
             currentConfig = sipConfig
             registrationState = SipRegistrationState(
@@ -60,6 +63,7 @@ final class SipEngine: ObservableObject {
             statusMessage: "Registering..."
         )
         #if canImport(linphonesw)
+        triedAlternateTransport = false
         ensureCore()
         applyAccount(sipConfig, transport: .Udp)
         #else
@@ -77,6 +81,7 @@ final class SipEngine: ObservableObject {
     func unregister() {
         currentConfig = nil
         isRegistered = false
+        hasActiveCall = false
         registrationState = SipRegistrationState(status: .unregistered, statusMessage: "Unregistered")
         #if canImport(linphonesw)
         try? core?.clearAccounts()
@@ -85,6 +90,10 @@ final class SipEngine: ObservableObject {
     }
 
     func startOutboundCall(sipConfig: SipConfig, destination: String, preferredCodec: G711CodecType?) {
+        let sipConfig = sipConfig.resolvedForRegistration()
+        #if canImport(linphonesw)
+        if currentCall != nil { return }
+        #endif
         guard let sanitized = PhoneNumberSanitizer.sanitizeDestination(destination) else {
             onError?(400, "Invalid destination number")
             return
@@ -115,6 +124,7 @@ final class SipEngine: ObservableObject {
             params.mediaEncryption = .SRTP
             params.avpfMode = .Disabled
             currentCall = try core.inviteAddressWithParams(addr: address, params: params)
+            hasActiveCall = currentCall != nil
             onDialing?("Dialing...")
         } catch {
             onError?(500, error.localizedDescription)
@@ -129,6 +139,7 @@ final class SipEngine: ObservableObject {
         try? currentCall?.terminate()
         currentCall = nil
         #endif
+        hasActiveCall = false
         onEnded?(reason)
     }
 
@@ -146,6 +157,7 @@ final class SipEngine: ObservableObject {
 
     func testSipConnection(_ sipConfig: SipConfig) async -> SipTestResult {
         let start = Date()
+        let sipConfig = sipConfig.resolvedForRegistration()
         if sipConfig.needsPassword() {
             return SipTestResult(isSuccess: false, statusCode: 0, message: "SIP password required", latencyMs: 0)
         }
@@ -178,6 +190,7 @@ final class SipEngine: ObservableObject {
         if core != nil { return }
         do {
             let created = try Factory.Instance.createCore(configPath: nil, factoryConfigPath: nil, systemContext: nil)
+            created.mediaEncryptionMandatory = false
             let listener = CoreDelegateStub(
                 onAccountRegistrationStateChanged: { [weak self] _, _, state, message in
                     Task { @MainActor in
@@ -247,8 +260,12 @@ final class SipEngine: ObservableObject {
             registrationState.statusMessage = message
             isRegistered = true
         case .Failed:
-            if let config = currentConfig, registrationState.status != .registered {
+            if !triedAlternateTransport, let config = currentConfig {
+                triedAlternateTransport = true
+                registrationState.status = .retrying
+                registrationState.statusMessage = "Retrying over TCP..."
                 applyAccount(config, transport: .Tcp)
+                return
             }
             registrationState.status = .failed
             registrationState.statusMessage = message
@@ -264,6 +281,7 @@ final class SipEngine: ObservableObject {
 
     private func handleCall(call: Call, state: Call.State, message: String) {
         currentCall = call
+        hasActiveCall = true
         switch state {
         case .OutgoingInit:
             onInitializing?(message)
@@ -276,10 +294,13 @@ final class SipEngine: ObservableObject {
         case .Connected, .StreamsRunning:
             onConnected?(call.currentParams?.usedAudioPayloadType?.mimeType ?? "G.711")
         case .Error:
+            hasActiveCall = false
+            currentCall = nil
             onError?(Int(call.reason.rawValue), message)
         case .End, .Released:
-            onEnded?(message)
+            hasActiveCall = false
             currentCall = nil
+            onEnded?(message)
         default:
             break
         }

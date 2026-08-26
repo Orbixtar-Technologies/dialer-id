@@ -118,7 +118,13 @@ struct DialerScreen: View {
             return
         }
         if !sip.isRegistered {
-            blockedMessage = "Line offline"
+            if sip.registrationState.needsPassword {
+                blockedMessage = "SIP password required"
+            } else if let error = sip.registrationState.lastError, !error.isEmpty {
+                blockedMessage = error
+            } else {
+                blockedMessage = sip.registrationState.formattedStatus
+            }
             return
         }
         let e164 = E164.format(digits, defaultRegion: E164.defaultRegion())

@@ -45,12 +45,7 @@ Incoming SIP / PushKit is not in this pass. The Android app is also outbound-onl
 
    Use the **workspace**, not the `.xcodeproj`, after `pod install`.
 
-   Linphone comes from Linphone’s podspec source (`linphone-sdk` 5.3.77, matching Android). If CocoaPods cannot resolve it, add this to `Podfile` (already present):
-
-   ```ruby
-   source 'https://gitlab.linphone.org/BC/public/podspec.git'
-   pod 'linphone-sdk', '5.3.77'
-   ```
+   Linphone is installed from the official zip (`download.linphone.org`, 5.3.110) via `scripts/install_linphone_sdk.sh`. The Appetize CI job does the same. GitLab’s podspec source is not required.
 
 5. In Xcode:
    - Signing & Capabilities: select your team
@@ -89,7 +84,7 @@ Appetize does **not** accept an `.ipa`. Upload a zipped **iOS Simulator** `.app`
 
 The Android Appetize app already uploaded from Windows stays on Android. Passing `?device=iphone16pro` on that URL does not turn it into iOS. iPhone devices need a separate iOS upload.
 
-On a Mac, the Appetize script installs Firebase and Google Sign-In (`SKIP_LINPHONE=1` by default):
+On a Mac, the Appetize script downloads Linphone from `download.linphone.org` and links Firebase + SIP (`SKIP_LINPHONE=0` by default):
 
 ```bash
 cd ios
@@ -107,8 +102,8 @@ Depot CI sandboxes are Linux only, so the Simulator zip still has to be built on
 
 Optional: after the first iOS upload, store `APPETIZE_IOS_PUBLIC_KEY` so later runs update the same app.
 
-What works there: auth, paywall, wallet, rates, contacts UI.  
-The GitHub Actions Appetize job installs Firebase and Google Sign-In pods (`SKIP_LINPHONE=1`). CallKit, microphone, and a real SIP call still will not work there. Use a physical iPhone for that.
+What works there: auth, paywall, wallet, rates, contacts UI, SIP REGISTER, and outbound INVITE.  
+Appetize still has a weak microphone/CallKit audio path. Use a physical iPhone for a real earpiece call. Set `SKIP_LINPHONE=1` only when you need a Firebase-only smoke build.
 
 ## Secrets
 

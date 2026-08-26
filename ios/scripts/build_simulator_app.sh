@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Build a zipped iOS Simulator .app for Appetize. Requires macOS + Xcode + CocoaPods.
-# SKIP_LINPHONE=1 (default here) links Firebase/Google Sign-In without the Linphone pod.
+# SKIP_LINPHONE=1 omits SIP. Default is 0 so Appetize gets REGISTER/INVITE.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DERIVED="${DERIVED_DATA_PATH:-$ROOT/build/DerivedData}"
 OUT_ZIP="${1:-$ROOT/build/DialerID-iphonesimulator.zip}"
-export SKIP_LINPHONE="${SKIP_LINPHONE:-1}"
+export SKIP_LINPHONE="${SKIP_LINPHONE:-0}"
 
 if [[ ! -f "$ROOT/Secrets.xcconfig" ]]; then
   cp "$ROOT/Secrets.xcconfig.example" "$ROOT/Secrets.xcconfig"
@@ -18,6 +18,10 @@ if [[ ! -f "$ROOT/DialerID/GoogleService-Info.plist" ]]; then
 fi
 
 mkdir -p "$(dirname "$OUT_ZIP")" "$DERIVED"
+
+if [[ "$SKIP_LINPHONE" != "1" ]]; then
+  bash "$ROOT/scripts/install_linphone_sdk.sh"
+fi
 
 (
   cd "$ROOT"
@@ -34,7 +38,9 @@ xcodebuild \
   CODE_SIGN_IDENTITY=- \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=YES \
-  ONLY_ACTIVE_ARCH=NO \
+  ONLY_ACTIVE_ARCH=YES \
+  ARCHS=arm64 \
+  EXCLUDED_ARCHS=x86_64 \
   build
 
 APP="$DERIVED/Build/Products/Debug-iphonesimulator/DialerID.app"

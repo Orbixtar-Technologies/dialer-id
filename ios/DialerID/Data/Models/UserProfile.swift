@@ -7,6 +7,8 @@ struct BalanceCache: Equatable {
 }
 
 struct SipConfig: Equatable {
+    static let defaultHost = "sip.sipup.org"
+
     var callerId: String = ""
     var deviceId: String = ""
     var host: String = ""
@@ -37,6 +39,17 @@ struct SipConfig: Equatable {
         if resolved == password { return self }
         var copy = self
         copy.password = resolved
+        return copy
+    }
+
+    func resolvedForRegistration(localPassword: String = "") -> SipConfig {
+        var copy = withResolvedPassword(localPassword)
+        if copy.host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            copy.host = Self.defaultHost
+        }
+        if copy.port <= 0 {
+            copy.port = 5060
+        }
         return copy
     }
 
@@ -193,7 +206,12 @@ struct UserProfile: Equatable {
                     let value = "\(nestedSip["deviceId"] ?? "")"
                     return value.isEmpty ? rootDeviceId : value
                 }(),
-                host: nestedSip["host"] as? String ?? "",
+                host: {
+                    let value = (nestedSip["host"] as? String) ?? ""
+                    return value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? SipConfig.defaultHost
+                        : value
+                }(),
                 password: password,
                 port: port,
                 username: {
@@ -205,6 +223,7 @@ struct UserProfile: Equatable {
         } else if !assignedSipId.isEmpty || !rootDeviceId.isEmpty {
             sipConfig = SipConfig(
                 deviceId: rootDeviceId,
+                host: SipConfig.defaultHost,
                 username: assignedSipId,
                 updatedAt: Int64(Date().timeIntervalSince1970 * 1000)
             )

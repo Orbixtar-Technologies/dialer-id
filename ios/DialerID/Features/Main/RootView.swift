@@ -219,11 +219,17 @@ struct MainShell: View {
             }
         }
         .onAppear {
-            if let sipConfig = repository.userProfile.sipConfig, !repository.userProfile.isGuest {
-                sip.register(sipConfig: sipConfig)
-            }
+            registerSipIfPossible()
             contacts.reload()
         }
+        .onChange(of: repository.userProfile.sipConfig) { _ in
+            registerSipIfPossible()
+        }
+    }
+
+    private func registerSipIfPossible() {
+        guard !repository.userProfile.isGuest, let sipConfig = repository.resolvedSipConfig() else { return }
+        sip.register(sipConfig: sipConfig)
     }
 
     private var tabBar: some View {

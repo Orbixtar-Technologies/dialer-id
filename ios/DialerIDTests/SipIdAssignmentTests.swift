@@ -114,6 +114,22 @@ final class SipIdAssignmentTests: XCTestCase {
         )
     }
 
+    func testApplyToSipConfigFillsDefaultHostWhenMissing() {
+        let merged = SipIdAssignment.applyToSipConfig(
+            SipConfig(username: "old", password: "secret"),
+            record: SipIdAssignmentRecord(sipId: "13251", firebaseUid: "u1", assignedAt: 1, username: "13251", deviceId: "10404")
+        )
+        XCTAssertEqual(merged.host, SipConfig.defaultHost)
+        XCTAssertEqual(merged.password, "secret")
+    }
+
+    func testResolvedForRegistrationFillsHostAndPassword() {
+        let resolved = SipConfig(username: "13251", password: "").resolvedForRegistration(localPassword: "cached")
+        XCTAssertEqual(resolved.host, SipConfig.defaultHost)
+        XCTAssertEqual(resolved.password, "cached")
+        XCTAssertTrue(resolved.hasUsableCredentials())
+    }
+
     func testApplyToSipConfigKeepsExistingPasswordAndHost() {
         let existing = SipConfig(host: "sip.example.test", password: "local-only", port: 5060)
         let merged = SipIdAssignment.applyToSipConfig(

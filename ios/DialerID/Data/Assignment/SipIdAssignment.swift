@@ -194,6 +194,9 @@ enum SipIdAssignment {
         }
         base.username = username
         base.deviceId = deviceId
+        if base.host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            base.host = SipConfig.defaultHost
+        }
         return base
     }
 

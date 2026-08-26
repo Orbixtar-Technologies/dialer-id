@@ -2,18 +2,14 @@ platform :ios, '16.0'
 use_frameworks!
 
 source 'https://cdn.cocoapods.org/'
-unless ENV['SKIP_LINPHONE'] == '1'
-  source 'https://gitlab.linphone.org/BC/public/podspec.git'
-end
 
 target 'DialerID' do
   pod 'FirebaseCore', '~> 11.0'
   pod 'FirebaseAuth', '~> 11.0'
   pod 'FirebaseDatabase', '~> 11.0'
   pod 'GoogleSignIn', '~> 8.0'
-  # Appetize / CI cannot use CallKit SIP. Skip the large Linphone download there.
   unless ENV['SKIP_LINPHONE'] == '1'
-    pod 'linphone-sdk', '5.3.77'
+    pod 'linphone-sdk', :path => 'Vendor/linphone-sdk-pod'
   end
 end
 
@@ -25,6 +21,7 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
   end
 end

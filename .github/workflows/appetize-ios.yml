@@ -11,18 +11,19 @@ on:
 jobs:
   build-and-upload:
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache CocoaPods
+      - name: Cache CocoaPods and Linphone SDK
         uses: actions/cache@v4
         with:
           path: |
             ios/Pods
+            ios/build/cache
             ~/Library/Caches/CocoaPods
-          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile') }}
+          key: pods-linphone-5.3.110-${{ runner.os }}-${{ hashFiles('ios/Podfile', 'ios/Vendor/linphone-sdk-pod/linphone-sdk.podspec') }}
 
       - name: Build iOS Simulator app
         run: bash ios/scripts/build_simulator_app.sh "$GITHUB_WORKSPACE/DialerID-iphonesimulator.zip"

@@ -45,9 +45,7 @@ final class CallManager: ObservableObject {
             catalog: repository.rateCatalog
         )
         guard case .allowed = decision else { return false }
-        guard let sipConfig = repository.userProfile.sipConfig?.withResolvedPassword(
-            KeychainStore.shared.password(uid: repository.userProfile.uid)
-        ), sipConfig.hasUsableCredentials() else {
+        guard let sipConfig = repository.resolvedSipConfig(), sipConfig.hasUsableCredentials() else {
             return false
         }
 
@@ -66,8 +64,24 @@ final class CallManager: ObservableObject {
             billingRate: rate,
             statusMessage: "Initializing..."
         )
+        #if targetEnvironment(simulator)
+        AudioSessionController.shared.activateForCall(speaker: true)
+        startSipCall()
+        #else
         callKit.startOutgoing(handle: e164)
+        #endif
         return true
+    }
+
+    private func startSipCall() {
+        let repository = DialerRepository.shared
+        guard let sipConfig = repository.resolvedSipConfig() else { return }
+        let codec = G711CodecType(rawValue: repository.userProfile.preferredCodec)
+        sip.startOutboundCall(
+            sipConfig: sipConfig,
+            destination: pendingDestination,
+            preferredCodec: codec
+        )
     }
 
     func endCall() {
@@ -168,14 +182,8 @@ final class CallManager: ObservableObject {
 
 extension CallManager: CallKitControllerDelegate {
     func callKitDidStart(_ uuid: UUID) {
-        let repository = DialerRepository.shared
-        guard let sipConfig = repository.userProfile.sipConfig else { return }
-        let codec = G711CodecType(rawValue: repository.userProfile.preferredCodec)
-        sip.startOutboundCall(
-            sipConfig: sipConfig,
-            destination: pendingDestination,
-            preferredCodec: codec
-        )
+        if sip.hasActiveCall { return }
+        startSipCall()
     }
 
     func callKitDidEnd(_ uuid: UUID) {
