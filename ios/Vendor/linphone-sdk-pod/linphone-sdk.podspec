@@ -7,7 +7,9 @@ Pod::Spec.new do |s|
   s.author = { "Belledonne Communications" => "https://linphone.org" }
   s.platform = :ios, "16.0"
   s.source = { :http => "https://download.linphone.org/releases/ios/linphone-sdk-5.3.110.zip" }
+  s.module_name = "linphonesw"
   s.vendored_frameworks = "Frameworks/*.xcframework"
+  s.source_files = "linphonesw/**/*.swift"
   s.frameworks = %w[
     AVFoundation AudioToolbox CoreMedia VideoToolbox UIKit QuartzCore
     OpenGLES CoreGraphics CoreVideo CFNetwork Security SystemConfiguration

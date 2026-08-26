@@ -1,5 +1,6 @@
 Vendor/linphone-extracted/
 Vendor/linphone-sdk-pod/Frameworks
+Vendor/linphone-sdk-pod/linphonesw
 Pods/
 *.xcworkspace
 !DialerID.xcodeproj/project.xcworkspace

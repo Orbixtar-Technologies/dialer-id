@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download the official Linphone iOS zip (no GitLab podspec) and expose
-# xcframeworks to the local CocoaPods spec in Vendor/linphone-sdk-pod.
+# xcframeworks plus the Swift wrapper to Vendor/linphone-sdk-pod.
 set -euo pipefail
 
 VERSION="${LINPHONE_SDK_VERSION:-5.3.110}"
@@ -11,6 +11,7 @@ URL="https://download.linphone.org/releases/ios/linphone-sdk-${VERSION}.zip"
 EXTRACT="$ROOT/Vendor/linphone-extracted"
 POD_DIR="$ROOT/Vendor/linphone-sdk-pod"
 FRAMEWORKS_LINK="$POD_DIR/Frameworks"
+SWIFT_LINK="$POD_DIR/linphonesw"
 
 mkdir -p "$CACHE" "$POD_DIR"
 
@@ -23,7 +24,7 @@ fi
 needs_extract=0
 if [[ ! -d "$EXTRACT" ]]; then
   needs_extract=1
-elif ! find "$EXTRACT" -name 'linphonesw.xcframework' -type d | grep -q .; then
+elif ! find "$EXTRACT" -name 'linphone.xcframework' -type d | grep -q .; then
   needs_extract=1
 fi
 
@@ -34,18 +35,29 @@ if [[ "$needs_extract" -eq 1 ]]; then
   unzip -q "$ZIP" -d "$EXTRACT"
 fi
 
-FOUND="$(find "$EXTRACT" -name 'linphonesw.xcframework' -type d | head -n 1 || true)"
+FOUND="$(find "$EXTRACT" -name 'linphone.xcframework' -type d | head -n 1 || true)"
 if [[ -z "$FOUND" ]]; then
-  echo "linphonesw.xcframework missing from $ZIP" >&2
-  find "$EXTRACT" -maxdepth 5 -type d >&2 || true
+  echo "linphone.xcframework missing from $ZIP" >&2
+  find "$EXTRACT" -maxdepth 6 -type d >&2 || true
   exit 1
 fi
 
 FRAMEWORKS_DIR="$(cd "$(dirname "$FOUND")" && pwd)"
-rm -rf "$FRAMEWORKS_LINK"
+SWIFT_DIR="$(find "$EXTRACT" -path '*/share/linphonesw' -type d | head -n 1 || true)"
+
+rm -rf "$FRAMEWORKS_LINK" "$SWIFT_LINK"
 mkdir -p "$FRAMEWORKS_LINK"
 for fw in "$FRAMEWORKS_DIR"/*.xcframework; do
-  ln -s "$fw" "$FRAMEWORKS_LINK/$(basename "$fw")"
+  name="$(basename "$fw")"
+  case "$name" in
+    *tester*) continue ;;
+  esac
+  ln -s "$fw" "$FRAMEWORKS_LINK/$name"
 done
 
+if [[ -n "$SWIFT_DIR" ]]; then
+  ln -s "$SWIFT_DIR" "$SWIFT_LINK"
+fi
+
 echo "Linphone frameworks: $FRAMEWORKS_LINK"
+echo "Linphone Swift wrapper: ${SWIFT_DIR:-missing}"
