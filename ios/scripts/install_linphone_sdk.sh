@@ -68,3 +68,13 @@ if [[ "$SWIFT_COUNT" -lt 1 ]]; then
   find "$EXTRACT" -iname '*.swift' | head -n 40 >&2 || true
   exit 1
 fi
+
+GENERATED="$ROOT/DialerID/Generated"
+mkdir -p "$GENERATED"
+WRAPPER="$(find "$SWIFT_DIR_OUT" -name 'LinphoneWrapper.swift' | head -n 1 || true)"
+if [[ -z "$WRAPPER" ]]; then
+  echo "LinphoneWrapper.swift not found" >&2
+  exit 1
+fi
+cp "$WRAPPER" "$GENERATED/LinphoneWrapper.swift"
+echo "Copied SIP Swift wrapper to DialerID/Generated/LinphoneWrapper.swift"

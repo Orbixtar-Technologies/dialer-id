@@ -23,6 +23,8 @@ if [[ "$SKIP_LINPHONE" != "1" ]]; then
   bash "$ROOT/scripts/install_linphone_sdk.sh"
 fi
 
+python3 "$ROOT/scripts/generate_xcode_project.py"
+
 (
   cd "$ROOT"
   pod install

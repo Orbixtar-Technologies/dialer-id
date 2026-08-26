@@ -1,10 +1,6 @@
 import Combine
 import Foundation
 
-#if LINPHONE_ENABLED
-import linphonesw
-#endif
-
 @MainActor
 final class SipEngine: ObservableObject {
     static let shared = SipEngine()
