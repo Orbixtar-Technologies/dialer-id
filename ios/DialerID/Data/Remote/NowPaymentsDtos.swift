@@ -146,11 +146,8 @@ struct NowFullCurrency: Equatable {
 struct NowMinAmountResponse: Equatable {
     var currencyFrom: String?
     var currencyTo: String?
-    var minAmountRaw: Any?
-    var fiatEquivalentRaw: Any?
-
-    var minAmount: Double { jsonAmount(minAmountRaw) }
-    var fiatEquivalentUsd: Double { jsonAmount(fiatEquivalentRaw) }
+    var minAmount: Double
+    var fiatEquivalentUsd: Double
 
     func resolvedMinAmountUsd() -> Double {
         fiatEquivalentUsd > 0 ? fiatEquivalentUsd : 0
@@ -160,8 +157,8 @@ struct NowMinAmountResponse: Equatable {
         NowMinAmountResponse(
             currencyFrom: object["currency_from"] as? String,
             currencyTo: object["currency_to"] as? String,
-            minAmountRaw: object["min_amount"],
-            fiatEquivalentRaw: object["fiat_equivalent"]
+            minAmount: jsonAmount(object["min_amount"]),
+            fiatEquivalentUsd: jsonAmount(object["fiat_equivalent"])
         )
     }
 }

@@ -76,8 +76,8 @@ final class CryptoPaymentFlowTests: XCTestCase {
         let response = NowMinAmountResponse(
             currencyFrom: "usd",
             currencyTo: "btc",
-            minAmountRaw: 0.00005,
-            fiatEquivalentRaw: 4.25
+            minAmount: 0.00005,
+            fiatEquivalentUsd: 4.25
         )
         XCTAssertEqual(response.fiatEquivalentUsd, 4.25, accuracy: 0.001)
         XCTAssertEqual(response.minAmount, 0.00005, accuracy: 0.0000001)
@@ -88,8 +88,8 @@ final class CryptoPaymentFlowTests: XCTestCase {
         let response = NowMinAmountResponse(
             currencyFrom: "usd",
             currencyTo: "btc",
-            minAmountRaw: 0.00005,
-            fiatEquivalentRaw: nil
+            minAmount: 0.00005,
+            fiatEquivalentUsd: 0
         )
         XCTAssertEqual(response.resolvedMinAmountUsd(), 0, accuracy: 0)
     }
